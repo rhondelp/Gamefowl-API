@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\Admin\DiseaseController as AdminDiseaseController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\RecommendationController as AdminRecommendationController;
 use App\Http\Controllers\Admin\RuleController;
 use App\Http\Controllers\Admin\SymptomController as AdminSymptomController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DiseaseController;
 use App\Http\Controllers\GamefowlController;
@@ -57,6 +59,13 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/rules', [RuleController::class, 'store']);
             Route::match(['put', 'patch'], '/rules/{id}', [RuleController::class, 'update']);
             Route::delete('/rules/{id}', [RuleController::class, 'destroy']);
+
+            Route::get('/dashboard', [DashboardController::class, 'index']);
+
+            Route::get('/users', [UserController::class, 'index']);
+            Route::get('/users/{id}', [UserController::class, 'show']);
+            Route::match(['put', 'patch'], '/users/{id}', [UserController::class, 'update']);
+            Route::delete('/users/{id}', [UserController::class, 'destroy']);
         });
     });
 });
