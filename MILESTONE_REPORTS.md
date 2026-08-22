@@ -326,7 +326,48 @@ Two test-side bugs found & fixed during development: Sanctum guard caching acros
 
 ---
 
+## Milestone 8 — Admin API (Users & Dashboard)
+
+**Status:** Complete & verified locally
+**Date:** 2026-08-22
+**Commit:** `feat: add admin user management and dashboard statistics`
+
+Backend-completion checkpoint. M4 knowledge-base admin CRUD was NOT redone — this milestone adds user management + dashboard, plus a consolidated authorization sweep.
+
+### Endpoints (admin-only)
+| Method | Endpoint | Notes |
+|---|---|---|
+| GET | `/api/v1/admin/users` | Paginated; filters `?role=`, `?status=active\|inactive` (deactivated hidden by default) |
+| GET | `/api/v1/admin/users/{id}` | Detail + aggregate `gamefowl_count` / `health_assessment_count`; works on deactivated accounts |
+| PATCH | `/api/v1/admin/users/{id}` | Update `role` and/or `status` (`inactive` = soft-delete, `active` = restore) |
+| DELETE | `/api/v1/admin/users/{id}` | Deactivate only (soft-delete), consistent with project convention |
+| GET | `/api/v1/admin/dashboard` | Aggregate stats via `DashboardService` |
+
+### Self-lockout guard
+Admins cannot demote/deactivate/promote their own account via this endpoint — returns **409 Conflict** with an explicit message. Implemented as a direct JSON response rather than an exception because the api/* error renderer converts AuthorizationExceptions into 404s (documented anti-enumeration behavior).
+
+### Dashboard definitions (documented in code)
+- `total_users` **includes deactivated accounts** so the headline always equals active + inactive from the breakdown; role/status breakdowns also include deactivated users
+- `total_gamefowls` counts non-soft-deleted birds (consistent with owner-facing listings)
+- "Most frequently suggested diseases" = appeared **anywhere in ranked results** (any rank), not only #1 — pinned by a test where Fowl Cholera appearing twice at rank #2 outranks Infectious Coryza's single rank-#1 appearance
+- `recent_assessments`: last 10 system-wide, summarized (bird name, owner id, top disease by rank, score)
+
+### Authorization sanity pass — CLEAN
+Consolidated sweep test hits all **23 `/api/v1/admin/*` routes** as a regular owner → every route correctly returns `403 {success:false, message:"Forbidden."}` (M4 knowledge-base surface + new user/dashboard routes). Cross-owner ID-guessing spot-checks (gamefowl detail, health records list/history/status, assessment detail) all return uniform 404s. No privilege gaps found.
+
+### Latent bug found & fixed during the pass
+The `User` model had carried the soft-delete *column* since Milestone 2 but was missing the `SoftDeletes` trait — deactivation semantics were stored but never queryable at model level. Trait added in this milestone.
+
+### Tests
+**Full suite: 79 passed (639 assertions).** New coverage: non-admin rejection on all user endpoints, list/filter/view/update/deactivate flows, self-lockout (409 + DB unchanged), deactivated-user visibility rules, dashboard numerically verified against a known fixture (exact counts, including the any-rank vs rank-1 disease definition).
+
+---
+
+## Backend completion checkpoint
+
+Milestones 1–8 complete: auth, gamefowl CRUD, knowledge base (+seeded data), diagnostic engine, health assessments with snapshots, merged health history/status, and the full admin surface. Next phase (Milestone 9+): React Native mobile app — separate repository.
+
 ## Pending
 
-- Admin API — user management, dashboard stats, and full admin-side knowledge-base management endpoints (admin middleware scaffolded since Milestone 2)
+- Milestone 9+ — React Native application (separate repo): authentication screens first
 
