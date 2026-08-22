@@ -207,7 +207,48 @@ Live smoke test vs PostgreSQL passed (public reads, admin symptom + rule creatio
 
 ---
 
+## Milestone 5 — Expert-System Diagnostic Engine
+
+**Status:** Complete & verified locally
+**Date:** 2026-08-22
+**Commit:** `feat: add weighted symptom-matching diagnostic engine`
+
+Pure logic milestone: no endpoint, no migrations, no controller wiring. The engine is a read-only consumer of the knowledge base, unit-tested in isolation.
+
+### Classes
+- `app/Services/ExpertSystem/DiagnosticEngine.php` — inference service; `diagnose(array $symptomIds): Collection<DiagnosisMatch>`
+- `app/Services/ExpertSystem/DiagnosisMatch.php` — readonly result DTO (disease id/name, matchScore 0–100, matchedSymptoms, missingSymptoms, severity, vetWarning) with an API-facing `toArray()` for the assessment endpoint in a later milestone
+- `config/expertsystem.php` — engine tunables
+
+### Scoring formula (implemented exactly)
+```
+match_score(D, S) = round( Σ weight(r) where r.symptom_id ∈ S / Σ weight(r) over rules(D) × 100 )
+```
+- Only active diseases are candidates; rules pointing to inactive symptoms are dropped from **both** numerator and denominator
+- Diseases with no effective rules or zero overlap with the input are never candidates (no divide-by-zero by construction)
+- Single documented rounding rule: PHP `round()` (half away from zero)
+
+### Configuration
+| Key | Default | Env override |
+|---|---|---|
+| `expertsystem.min_match_threshold` | 20 | `EXPERTSYSTEM_MIN_MATCH_THRESHOLD` |
+| `expertsystem.max_results` | 5 | `EXPERTSYSTEM_MAX_RESULTS` |
+
+Ranking: score DESC → disease name ASC (deterministic tie-break). `vet_warning` surfaces only when severity rank ≥ severe (mild < moderate < severe < critical). `unmatched_selected_symptoms` deliberately deferred to the API layer — it is input-dependent, identical across all candidate results, so it is computed once per request there.
+
+**Division of responsibility:** the engine is defensive only (ignores unknown/inactive/duplicate/non-numeric IDs); validating submitted symptoms exists belongs to the assessment endpoint's FormRequest in Milestone 6/7.
+
+### Hand-verified examples (against real seeded data)
+1. Coccidiosis (rule total 24): input `{Bloody droppings(5), Pale comb(4), Lethargy(3)}` → `(5+4+3)/24 × 100` = **50**, matched 3 / missing 4 ✓
+2. Newcastle Disease (rule total 28): input `{Greenish droppings(5), Twisted neck(5), Loss of appetite(3)}` → `13/28 × 100 = round(46.43)` = **46** ✓
+3. Six-symptom overlap input ranks `[Coccidiosis 50, Fowl Cholera 50, Newcastle 46]` — Fowl Cholera ties at 50 because it also carries Twisted neck(w2), and the alphabetical tie-break resolves the tie ✓ (this case initially caught a hand-calc error in the test expectations themselves — the engine math was correct)
+
+### Tests
+**50 passed (408 assertions)** full suite; new engine suite adds 13 tests covering: empty/invalid input, both hand-calculated seeded examples, multi-disease ranking, perfect-match 100, inactive symptom exclusion (numerator/denominator/missing lists), inactive disease exclusion, rule-less disease safety, duplicate-ID deduplication, defensive unknown-ID handling, threshold config exclusion, max-results limit, alphabetical tie-break, and vet-warning severity gating.
+
+---
+
 ## Pending
 
-- Expert-System Engine — `DiagnosticEngine` service implementing the weighted match-score formula against this seeded knowledge base, tested in isolation before wiring to any endpoint
+- Health Assessment API — tables (`health_assessments`, etc.) and endpoint that call this engine from a real HTTP request, tied to a specific gamefowl, persisting results
 
