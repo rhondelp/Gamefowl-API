@@ -8,6 +8,8 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DiseaseController;
 use App\Http\Controllers\GamefowlController;
 use App\Http\Controllers\HealthAssessmentController;
+use App\Http\Controllers\HealthHistoryController;
+use App\Http\Controllers\HealthRecordController;
 use App\Http\Controllers\SymptomController;
 use Illuminate\Support\Facades\Route;
 
@@ -27,6 +29,11 @@ Route::prefix('v1')->group(function (): void {
 
         Route::post('/gamefowls/{gamefowlId}/health-assessments', [HealthAssessmentController::class, 'store']);
         Route::get('/health-assessments/{id}', [HealthAssessmentController::class, 'show']);
+
+        Route::post('/gamefowls/{gamefowlId}/health-records', [HealthRecordController::class, 'store']);
+        Route::get('/gamefowls/{gamefowlId}/health-records', [HealthRecordController::class, 'index']);
+        Route::get('/gamefowls/{gamefowlId}/health-history', [HealthHistoryController::class, 'history']);
+        Route::get('/gamefowls/{gamefowlId}/health-status', [HealthHistoryController::class, 'status']);
 
         Route::get('/symptoms', [SymptomController::class, 'index']);
         Route::get('/diseases', [DiseaseController::class, 'index']);

@@ -16,4 +16,8 @@ return [
 
     // Maximum number of ranked disease matches returned per diagnosis.
     'max_results' => env('EXPERTSYSTEM_MAX_RESULTS', 5),
+
+    // Health-status endpoint: an assessment older than this many days is
+    // flagged as stale rather than driving the current status label.
+    'recent_assessment_days' => env('EXPERTSYSTEM_RECENT_ASSESSMENT_DAYS', 14),
 ];

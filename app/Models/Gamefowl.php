@@ -64,4 +64,9 @@ class Gamefowl extends Model
     {
         return $this->hasMany(HealthAssessment::class);
     }
+
+    public function healthRecords(): HasMany
+    {
+        return $this->hasMany(HealthRecord::class);
+    }
 }
