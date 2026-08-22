@@ -85,7 +85,7 @@ class Disease extends Model
     {
         return $this->belongsToMany(Symptom::class, 'disease_symptom_rules')
             ->using(DiseaseSymptomRule::class)
-            ->withPivot('weight')
+            ->withPivot('id', 'weight')
             ->withTimestamps();
     }
 
