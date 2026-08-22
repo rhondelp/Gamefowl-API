@@ -47,6 +47,11 @@ Route::prefix('v1')->group(function (): void {
         Route::middleware('auth:sanctum')->group(function (): void {
             Route::post('/logout', [AuthController::class, 'logout']);
             Route::get('/me', [AuthController::class, 'me']);
+            // Profile self-service (Backend M9): a user may edit own
+            // name/email and change own password; role/active status stay
+            // admin-only via /admin/users/{id}.
+            Route::patch('/me', [AuthController::class, 'updateProfile']);
+            Route::put('/me/password', [AuthController::class, 'changePassword']);
         });
     });
 
