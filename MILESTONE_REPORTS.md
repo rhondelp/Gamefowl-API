@@ -287,7 +287,46 @@ Live cycle verified vs PostgreSQL: submit `{Bloody droppings, Pale comb}` → Co
 
 ---
 
+## Milestone 7 — Health History API
+
+**Status:** Complete & verified locally
+**Date:** 2026-08-22
+**Commit:** `feat: add health records and merged health history timeline API`
+
+### Endpoints (owner-scoped via parent bird; cross-owner → uniform 404)
+| Method | Endpoint | Notes |
+|---|---|---|
+| POST | `/api/v1/gamefowls/{id}/health-records` | Manual log entry; `recorded_at` backdating allowed, future dates rejected; defaults to today |
+| GET | `/api/v1/gamefowls/{id}/health-records` | Paginated list (`?per_page=`, capped 100) |
+| GET | `/api/v1/gamefowls/{id}/health-history` | **Merged timeline** (`?page=`, `?per_page=`) |
+| GET | `/api/v1/gamefowls/{id}/health-status` | Derived status summary |
+
+### Why `health_records` is a separate table
+Assessments are system-generated immutable diagnostic events with engine-driven snapshots; records are human-entered logbook items (vet visits, weight checks, vaccinations, notes) with arbitrary backdated dates and no engine involvement. Different authors, shapes, and lifecycles.
+
+### Design decisions
+- **Policy folded into `GamefowlPolicy`** — records have no independent access path (no `/health-records/{id}` route); controllers authorize on the bird directly. One ownership source of truth.
+- **No SQL UNION** — two scoped queries → normalized tagged entries → PHP merge → slice-pagination. Sort: `occurred_at DESC`, tie-break `[created_at DESC, id DESC]`; same-day entries list records above assessments.
+- **Timeline assessments are summarized only**: top possible disease + score + severity + assessment id for linking to the full M6 detail endpoint — no nested result duplication.
+- Record types: fixed enum `vet_visit / weight_check / general_note / vaccination`; `weight` nullable decimal shared across types (no polymorphic subtypes at this scope).
+
+### Status-label derivation rules (evaluated in order)
+1. No assessments at all → **`no_data`** (even if manual records exist — symptom screening hasn't happened yet)
+2. Latest assessment older than `expertsystem.recent_assessment_days` (config, default 14) → **`stale`**
+3. Top result match_score ≥ 50 (constant) → **`needs_attention`**
+4. Otherwise → **`healthy`** (covers low scores and assessments with zero qualifying results)
+
+Response includes `based_on` (assessment id, top disease, score), `days_since_last_assessment`, latest health record, and the standard disclaimer.
+
+### Tests
+**69 passed (529 assertions)** full suite. New coverage: record CRUD/validation/ownership, timeline interleaving with out-of-order submissions, pagination over mixed entry sets, empty-history bird, six-case table-driven status derivation, cross-owner 404s.
+Live cycle verified vs PostgreSQL (backdated record + M6 assessment merged correctly; status derived as expected).
+
+Two test-side bugs found & fixed during development: Sanctum guard caching across table-driven cases (needs `Auth::forgetGuards()` when users switch mid-test) and a double name→ID resolution passing IDs where names were expected.
+
+---
+
 ## Pending
 
-- Health History API — timeline view combining assessments and general health records over time for each bird
+- Admin API — user management, dashboard stats, and full admin-side knowledge-base management endpoints (admin middleware scaffolded since Milestone 2)
 
