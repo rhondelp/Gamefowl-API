@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\SymptomController as AdminSymptomController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DiseaseController;
 use App\Http\Controllers\GamefowlController;
+use App\Http\Controllers\HealthAssessmentController;
 use App\Http\Controllers\SymptomController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +24,9 @@ Route::prefix('v1')->group(function (): void {
 
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::apiResource('gamefowls', GamefowlController::class);
+
+        Route::post('/gamefowls/{gamefowlId}/health-assessments', [HealthAssessmentController::class, 'store']);
+        Route::get('/health-assessments/{id}', [HealthAssessmentController::class, 'show']);
 
         Route::get('/symptoms', [SymptomController::class, 'index']);
         Route::get('/diseases', [DiseaseController::class, 'index']);
