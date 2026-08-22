@@ -248,7 +248,46 @@ Ranking: score DESC → disease name ASC (deterministic tie-break). `vet_warning
 
 ---
 
+## Milestone 6 — Health Assessment API
+
+**Status:** Complete & verified locally
+**Date:** 2026-08-22
+**Commit:** `feat: add immutable health assessment API consuming diagnostic engine`
+
+The engine from Milestone 5 is consumed unmodified — this milestone validates input, persists an immutable record, and returns ranked results with explanations.
+
+### Endpoints
+| Method | Endpoint | Notes |
+|---|---|---|
+| POST | `/api/v1/gamefowls/{gamefowlId}/health-assessments` | Owner-only; one transaction wraps all writes; 201 |
+| GET | `/api/v1/health-assessments/{id}` | Full detail with snapshots; owner-of-parent-bird only |
+
+No update/delete endpoints — assessments are append-only immutable historical records.
+
+### Schema
+- `health_assessments`: gamefowl_id (FK **RESTRICT**), age/sex snapshots at assessment time (auto-filled from the live bird when not supplied by the client), optional context fields (`duration_of_symptoms`, `appetite`, `activity_level` enums; `additional_notes`)
+- `health_assessment_symptoms`: pivot with **denormalized `symptom_name` snapshot**
+- `health_assessment_results`: rank, match_score, `matched_symptoms`/`missing_symptoms` JSON name snapshots, `disease_name` snapshot, severity + vet-warning snapshots
+- FKs into knowledge-base tables use RESTRICT so DB-level hard deletes can never orphan historical data
+
+### Cautious-wording contract
+Results expose `possible_disease` (never "diagnosis") and every response carries a static disclaimer: *"This assessment is generated from reported symptoms and is not a confirmed veterinary diagnosis. Always consult a licensed veterinarian..."*
+
+### Division of responsibility (as planned in M5)
+Input validation lives here: `symptom_ids` required (1–30), each must exist **and be active** — inactive/nonexistent IDs are rejected 422 here rather than silently ignored by the engine.
+
+### Fixes made en route
+- Migration ordering again (child tables sorted before parent alphabetically — renamed timestamps)
+- Discovered Laravel converts policy denials (`AuthorizationException`) into `AccessDeniedHttpException` **before** custom render callbacks run — bootstrap updated so cross-owner access keeps its uniform 404 anti-enumeration envelope; the admin middleware's explicit 403 is unaffected
+
+### Tests
+**59 passed (453 assertions)** full suite. Health-assessment suite covers: faithful pass-through (endpoint output asserted field-by-field against a direct `DiagnosticEngine::diagnose()` call on identical input), cross-owner bird → 404, empty/inactive/nonexistent symptom rejection, view own vs another owner's assessment, snapshot survival after KB renames/deactivations, and transaction rollback simulation (`HealthAssessmentResult::creating` throws mid-persist → zero rows left behind).
+
+Live cycle verified vs PostgreSQL: submit `{Bloody droppings, Pale comb}` → Coccidiosis **38** = same value pinned by M5 unit tests.
+
+---
+
 ## Pending
 
-- Health Assessment API — tables (`health_assessments`, etc.) and endpoint that call this engine from a real HTTP request, tied to a specific gamefowl, persisting results
+- Health History API — timeline view combining assessments and general health records over time for each bird
 
