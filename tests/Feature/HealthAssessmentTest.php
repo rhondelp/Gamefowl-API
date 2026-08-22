@@ -14,6 +14,19 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
+/**
+ * File: tests/Feature/HealthAssessmentTest.php
+ *
+ * Purpose:
+ *   Milestone 6 coverage: the full assessment lifecycle.
+ *
+ * Covers: faithful pass-through (endpoint output asserted field-by-field
+ * against a direct DiagnosticEngine call on identical input), auto-filled
+ * age/sex snapshots, cross-owner 404, input validation (empty list,
+ * inactive/nonexistent symptoms rejected HERE, not silently by the engine),
+ * view ownership, snapshot immutability after knowledge-base renames/
+ * deactivations, and transaction rollback leaving zero partial rows.
+ */
 class HealthAssessmentTest extends TestCase
 {
     use RefreshDatabase;

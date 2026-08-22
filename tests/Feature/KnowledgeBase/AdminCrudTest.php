@@ -11,6 +11,17 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
+/**
+ * File: tests/Feature/KnowledgeBase/AdminCrudTest.php
+ *
+ * Purpose:
+ *   Milestone 4 admin knowledge-base CRUD coverage.
+ *
+ * Covers: non-admin blocked from ALL write endpoints with 403; full admin
+ * CRUD on symptoms/diseases/recommendations; rule management including the
+ * duplicate-pair rejection and weight bounds; attach/detach recommendations;
+ * DELETE = deactivation semantics; unauthenticated 401s.
+ */
 class AdminCrudTest extends TestCase
 {
     use RefreshDatabase;

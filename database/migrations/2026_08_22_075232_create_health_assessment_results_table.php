@@ -1,5 +1,19 @@
 <?php
 
+/**
+ * File: database/migrations/2026_08_22_075232_create_health_assessment_results_table.php
+ *
+ * Purpose:
+ *   One row per ranked disease suggestion within an assessment: rank,
+ *   match_score, JSON name lists for matched/missing symptoms, and snapshot
+ *   columns (disease_name, severity_at_assessment, vet_warning_at_assessment)
+ *   so historical results read correctly forever even if the knowledge base
+ *   changes later. unique(health_assessment_id, rank) guarantees one result
+ *   per rank position.
+ *
+ * NOTE on ordering: runs after create_health_assessments_table.
+ */
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

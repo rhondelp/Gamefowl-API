@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * File: database/migrations/0001_01_01_000002_create_jobs_table.php
+ *
+ * Purpose:
+ *   Framework-shipped queue storage (jobs, job_batches, failed_jobs).
+ *   Currently unused — no background jobs exist yet — but shipped by
+ *   default so queues work out of the box if ever needed.
+ */
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

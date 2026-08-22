@@ -4,6 +4,13 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 
+/**
+ * File: tests/Unit/ExampleTest.php
+ *
+ * Purpose:
+ *   Framework placeholder test (asserts true === true). Kept as a trivial
+ *   sanity check that the Unit suite runs.
+ */
 class ExampleTest extends TestCase
 {
     /**

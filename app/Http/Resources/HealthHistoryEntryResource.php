@@ -7,18 +7,33 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Carbon;
 
 /**
- * Normalizes the two timeline source types (system-generated health
- * assessments and manual health records) into one consistent entry shape,
- * tagged with a `type` discriminator so clients can render them
- * differently. Assessment entries stay summarized — full diagnostic
- * detail remains available via GET /api/v1/health-assessments/{id}.
+ * File: app/Http/Resources/HealthHistoryEntryResource.php
  *
- * The underlying resource is a pre-normalized array built by
- * HealthHistoryController.
+ * Purpose:
+ *   Normalizes the two timeline source types (system-generated health
+ *   assessments and manual health records) into ONE consistent entry shape,
+ *   tagged with a `type` discriminator so the mobile app can render them
+ *   differently.
+ *
+ * How it connects:
+ *   HealthHistoryController builds pre-normalized entry arrays (one shape
+ *   per source type, plus a sort tuple) and hands them to this resource for
+ *   serialization. Assessment entries stay SUMMARIZED — the full diagnostic
+ *   detail remains available via GET /health-assessments/{id}, referenced by
+ *   assessment_id here instead of being duplicated into every timeline item.
  */
 class HealthHistoryEntryResource extends JsonResource
 {
     /**
+     * Render one timeline entry according to its type.
+     *
+     * - 'assessment': top possible disease + score + severity summary.
+     * - 'health_record': the logbook fields (type/title/weight).
+     *
+     * Both branches share `occurred_at`, but with different precision:
+     * assessments use full ISO timestamps; records use their (possibly
+     * backdated) plain date.
+     *
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array

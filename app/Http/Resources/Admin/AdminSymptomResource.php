@@ -5,10 +5,17 @@ namespace App\Http\Resources\Admin;
 use App\Http\Resources\SymptomResource;
 use Illuminate\Http\Request;
 
+/**
+ * File: app/Http/Resources/Admin/AdminSymptomResource.php
+ *
+ * Purpose:
+ *   ADMIN view of a symptom: owner-facing fields plus is_active and
+ *   timestamps, since the admin list includes deactivated entries.
+ */
 class AdminSymptomResource extends SymptomResource
 {
     /**
-     * Admin view of a symptom including the active flag.
+     * Base fields + admin metadata.
      *
      * @return array<string, mixed>
      */

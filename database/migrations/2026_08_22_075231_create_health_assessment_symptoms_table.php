@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * File: database/migrations/2026_08_22_075231_create_health_assessment_symptoms_table.php
+ *
+ * Purpose:
+ *   Pivot: which symptoms the owner selected for an assessment, with a
+ *   SNAPSHOT of each symptom's name at submission time (symptom_name).
+ *   The snapshot is deliberate denormalization — renames/deactivations in
+ *   the knowledge base must never rewrite what an owner reported historically.
+ *
+ * NOTE on ordering: runs after create_health_assessments_table.
+ */
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

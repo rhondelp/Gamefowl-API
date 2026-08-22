@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * File: database/migrations/2026_08_22_070254_create_recommendations_table.php
+ *
+ * Purpose:
+ *   Knowledge base: care-advice entries ("Isolate affected birds", ...) that
+ *   admins attach to diseases. category uses a constrained value list defined
+ *   in the Recommendation model so app-side grouping stays predictable.
+ */
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

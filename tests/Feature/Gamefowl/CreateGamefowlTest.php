@@ -6,6 +6,17 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * File: tests/Feature/Gamefowl/CreateGamefowlTest.php
+ *
+ * Purpose:
+ *   Feature tests for POST /api/v1/gamefowls (GamefowlController::store).
+ *
+ * Covers: successful creation (201 + persisted row), authentication required,
+ * missing name rejected, invalid sex enum rejected, future date_of_birth
+ * rejected, and payload-spoofed user_id ignored (bird always belongs to the
+ * authenticated owner).
+ */
 class CreateGamefowlTest extends TestCase
 {
     use RefreshDatabase;

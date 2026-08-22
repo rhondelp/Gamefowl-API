@@ -13,6 +13,16 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
+/**
+ * File: tests/Feature/HealthHistoryTest.php
+ *
+ * Purpose:
+ *   Milestone 7 coverage: manual health records + merged timeline + status.
+ *
+ * Covers: record creation/validation/ownership; timeline interleaving with
+ * out-of-order submissions; pagination over mixed entry types; empty-history
+ * birds; the six-case table-driven status-label derivation; cross-owner 404s.
+ */
 class HealthHistoryTest extends TestCase
 {
     use RefreshDatabase;

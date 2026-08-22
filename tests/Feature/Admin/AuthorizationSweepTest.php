@@ -13,6 +13,17 @@ use Tests\TestCase;
  * 1. every /api/v1/admin/* route rejects non-admins with the Forbidden envelope;
  * 2. no owner can read another owner's private data by ID guessing.
  */
+/**
+ * File: tests/Feature/Admin/AuthorizationSweepTest.php
+ *
+ * Purpose:
+ *   Consolidated pre-mobile-completion authorization checkpoint.
+ *
+ * Part 1: every /api/v1/admin/* route (Milestone 4 knowledge base + M8
+ * users/dashboard) rejects a regular owner with 403 Forbidden.
+ * Part 2: owners cannot reach another owner's private data by guessing IDs —
+ * gamefowl show, records, history, status, and assessment detail all 404.
+ */
 class AuthorizationSweepTest extends TestCase
 {
     use RefreshDatabase;

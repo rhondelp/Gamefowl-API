@@ -7,6 +7,14 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Tests\TestCase;
 
+/**
+ * File: tests/Feature/Auth/MeTest.php
+ *
+ * Purpose:
+ *   Tests GET /api/v1/auth/me: returns the authenticated user's profile via
+ *   UserResource without leaking sensitive fields (password/tokens), and
+ *   returns 401 when no token is presented.
+ */
 class MeTest extends TestCase
 {
     use RefreshDatabase;

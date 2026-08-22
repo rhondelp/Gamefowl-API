@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * File: database/migrations/2026_08_22_082218_create_health_records_table.php
+ *
+ * Purpose:
+ *   Manual, human-entered logbook entries for a bird (vet visits, weight
+ *   checks, vaccinations, notes) — separate from engine-generated
+ *   assessments because the author, lifecycle, and shape differ.
+ *   recorded_at is owner-chosen so backdating is possible; composite index
+ *   on (gamefowl_id, recorded_at) keeps timeline sorting fast.
+ */
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

@@ -9,6 +9,16 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
+/**
+ * File: tests/Feature/Admin/AdminUserManagementTest.php
+ *
+ * Purpose:
+ *   Milestone 8 coverage: admin user management endpoints.
+ *
+ * Covers: non-admin 403 on all user routes; list/filter by role and status;
+ * detail with aggregate counts; role/status updates including reactivation;
+ * the self-lockout guard (409, database unchanged); deactivate via DELETE.
+ */
 class AdminUserManagementTest extends TestCase
 {
     use RefreshDatabase;

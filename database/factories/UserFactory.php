@@ -8,6 +8,14 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
+ * File: database/factories/UserFactory.php
+ *
+ * Purpose:
+ *   Test fixture builder for User accounts. Used by every feature test that
+ *   needs an authenticated user; tests pass ['role' => 'admin'] explicitly
+ *   when they need an admin (the default state relies on the DB default,
+ *   which is 'owner').
+ *
  * @extends Factory<User>
  */
 class UserFactory extends Factory
@@ -18,7 +26,9 @@ class UserFactory extends Factory
     protected static ?string $password;
 
     /**
-     * Define the model's default state.
+     * Default attribute set for a new test user. The password is hashed once
+     * per process and reused (static::$password) so bcrypt cost doesn't slow
+     * down large suites — tests log in with the plain value 'password'.
      *
      * @return array<string, mixed>
      */
@@ -34,7 +44,8 @@ class UserFactory extends Factory
     }
 
     /**
-     * Indicate that the model's email address should be unverified.
+     * State: mark the account's email_verified_at as null (unused by the
+     * current API but kept for framework compatibility).
      */
     public function unverified(): static
     {

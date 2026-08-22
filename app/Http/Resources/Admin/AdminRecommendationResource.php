@@ -5,10 +5,17 @@ namespace App\Http\Resources\Admin;
 use App\Http\Resources\RecommendationResource;
 use Illuminate\Http\Request;
 
+/**
+ * File: app/Http/Resources/Admin/AdminRecommendationResource.php
+ *
+ * Purpose:
+ *   ADMIN view of a recommendation: owner-facing fields plus is_active and
+ *   timestamps, since the admin list includes deactivated entries too.
+ */
 class AdminRecommendationResource extends RecommendationResource
 {
     /**
-     * Admin view of a recommendation including the active flag.
+     * Base fields + admin metadata.
      *
      * @return array<string, mixed>
      */

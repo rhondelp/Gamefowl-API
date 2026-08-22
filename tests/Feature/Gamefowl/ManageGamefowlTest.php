@@ -8,6 +8,17 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
+/**
+ * File: tests/Feature/Gamefowl/ManageGamefowlTest.php
+ *
+ * Purpose:
+ *   Feature tests for show/update/delete of individual gamefowls.
+ *
+ * Covers: owners can access their own birds; a different owner gets the
+ * uniform 404 "Resource not found." envelope on all three ID-based actions
+ * (anti-enumeration choice from Milestone 3); soft delete keeps the row in
+ * the database while hiding it from every listing; unauthenticated 401s.
+ */
 class ManageGamefowlTest extends TestCase
 {
     use RefreshDatabase;

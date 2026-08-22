@@ -8,6 +8,16 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Tests\TestCase;
 
+/**
+ * File: tests/Feature/Gamefowl/ListGamefowlTest.php
+ *
+ * Purpose:
+ *   Feature tests for GET /api/v1/gamefowls.
+ *
+ * Covers: strict per-owner scoping (another owner's birds never appear),
+ * inactive birds excluded by default but included with ?include_inactive=1,
+ * and authentication required.
+ */
 class ListGamefowlTest extends TestCase
 {
     use RefreshDatabase;

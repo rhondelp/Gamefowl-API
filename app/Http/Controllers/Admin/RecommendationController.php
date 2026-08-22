@@ -9,8 +9,26 @@ use App\Http\Resources\Admin\AdminRecommendationResource;
 use App\Models\Recommendation;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * File: app/Http/Controllers/Admin/RecommendationController.php
+ *
+ * Purpose:
+ *   Admin CRUD for care-advice entries ("Isolate affected birds", etc.):
+ *     GET    /admin/recommendations        — all (incl. inactive)
+ *     POST   /admin/recommendations        — create
+ *     PUT    /admin/recommendations/{id}   — update / re-activate
+ *     DELETE /admin/recommendations/{id}   — deactivate (never hard delete)
+ *
+ * How it fits into the project:
+ *   Recommendations carry no scoring weight; they are guidance content that
+ *   admins attach to diseases via Admin\DiseaseController and that ride
+ *   along in assessment output for the owner's benefit.
+ */
 class RecommendationController extends Controller
 {
+    /**
+     * List every recommendation, grouped visually by category then title.
+     */
     public function index(): JsonResponse
     {
         $recommendations = Recommendation::orderBy('category')->orderBy('title')->get();
@@ -24,6 +42,9 @@ class RecommendationController extends Controller
         ]);
     }
 
+    /**
+     * Create a recommendation; starts active (explicit so the response shows it).
+     */
     public function store(StoreRecommendationRequest $request): JsonResponse
     {
         $recommendation = Recommendation::create([
@@ -40,6 +61,9 @@ class RecommendationController extends Controller
         ], 201);
     }
 
+    /**
+     * Partial update; also the re-activation path ({"is_active": true}).
+     */
     public function update(UpdateRecommendationRequest $request, int $id): JsonResponse
     {
         $recommendation = Recommendation::findOrFail($id);
@@ -54,6 +78,10 @@ class RecommendationController extends Controller
         ]);
     }
 
+    /**
+     * Deactivate. Linked diseases keep their pivot rows, but deactivated
+     * advice stops being shown to owners.
+     */
     public function destroy(int $id): JsonResponse
     {
         $recommendation = Recommendation::findOrFail($id);

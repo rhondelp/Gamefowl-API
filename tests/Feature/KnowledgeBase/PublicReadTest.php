@@ -10,6 +10,15 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
+/**
+ * File: tests/Feature/KnowledgeBase/PublicReadTest.php
+ *
+ * Purpose:
+ *   Verifies the read-visibility split for knowledge-base data.
+ *
+ * Covers: general endpoints hide deactivated entries AND internal data
+ * (rule weights, is_active); admins see everything through /admin/* routes.
+ */
 class PublicReadTest extends TestCase
 {
     use RefreshDatabase;

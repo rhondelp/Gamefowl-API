@@ -7,12 +7,21 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
+ * File: database/factories/GamefowlFactory.php
+ *
+ * Purpose:
+ *   Test fixture builder for Gamefowl profiles. Produces realistic birds
+ *   (real breed/color names, plausible dates and weights) so tests that list
+ *   or score them read like production data. ->for($user) sets the owner.
+ *
  * @extends Factory<Gamefowl>
  */
 class GamefowlFactory extends Factory
 {
     /**
-     * Define the model's default state.
+     * Default attribute set. Most fields are wrapped in optional() so tests
+     * exercise both filled and null paths; is_active defaults to true since
+     * that mirrors real creation via the API.
      *
      * @return array<string, mixed>
      */
@@ -32,6 +41,10 @@ class GamefowlFactory extends Factory
         ];
     }
 
+    /**
+     * State: an inactive (retired) bird — hidden from default listings but
+     * visible with ?include_inactive=1.
+     */
     public function inactive(): static
     {
         return $this->state(fn (array $attributes) => [

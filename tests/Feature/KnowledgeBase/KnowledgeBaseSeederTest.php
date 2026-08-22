@@ -10,6 +10,16 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
+/**
+ * File: tests/Feature/KnowledgeBase/KnowledgeBaseSeederTest.php
+ *
+ * Purpose:
+ *   Validates KnowledgeBaseSeeder output: exact counts (5 diseases, 23
+ *   symptoms, 10 recommendations, 25+ rules), minimum content per disease,
+ *   weights within 1-5, no duplicate pairs, and the five expected disease
+ *   names present. This seeder is what the engine's hand-calculated tests
+ *   and Milestone 6+ flows run against.
+ */
 class KnowledgeBaseSeederTest extends TestCase
 {
     use RefreshDatabase;

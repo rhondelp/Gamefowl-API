@@ -6,6 +6,20 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * File: tests/Feature/Auth/RegisterTest.php
+ *
+ * Purpose:
+ *   Feature tests for POST /api/v1/auth/register, exercising
+ *   AuthController::register through real HTTP calls.
+ *
+ * Covers: successful registration (201 + user + token), duplicate email,
+ * short password, mismatched password confirmation, and the security rule
+ * that a `role` field in the payload can never create an admin.
+ *
+ * Note: multiple requests inside one method share a container; when tests
+ * switch users they call Auth::forgetGuards() first (see Milestone 2 notes).
+ */
 class RegisterTest extends TestCase
 {
     use RefreshDatabase;

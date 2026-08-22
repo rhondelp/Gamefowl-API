@@ -11,6 +11,18 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
+/**
+ * File: tests/Feature/Admin/AdminDashboardTest.php
+ *
+ * Purpose:
+ *   Milestone 8 coverage: dashboard statistics against an exact fixture
+ *   (4 users incl. one deactivated, 3 birds, 3 assessments).
+ *
+ * Pins exact counts for every stat AND the documented definition of
+ * "suggested": a disease appearing twice at rank #2 outranks one appearing
+ * once at rank #1. Recent assessments are asserted newest-first with bird
+ * linkage and no nested result dumps.
+ */
 class AdminDashboardTest extends TestCase
 {
     use RefreshDatabase;

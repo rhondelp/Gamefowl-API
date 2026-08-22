@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * File: database/migrations/2026_08_22_054220_create_personal_access_tokens_table.php
+ *
+ * Purpose:
+ *   Creates the table Laravel Sanctum uses to store API tokens. Every
+ *   register/login response token corresponds to one row here; logout
+ *   deletes its row, which is what invalidates the token. Published by
+ *   Sanctum during Milestone 1 — do not modify its columns.
+ */
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

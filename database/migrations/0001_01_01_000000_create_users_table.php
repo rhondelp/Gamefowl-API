@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * File: database/migrations/0001_01_01_000000_create_users_table.php
+ *
+ * Purpose:
+ *   Framework-shipped auth tables: users (accounts), password_reset_tokens,
+ *   and sessions. Later extended by the add_role_and_soft_deletes migration.
+ *   The users table is the anchor of every ownership check in the API.
+ */
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

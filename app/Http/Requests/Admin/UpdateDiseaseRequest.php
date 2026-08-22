@@ -7,14 +7,29 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/**
+ * File: app/Http/Requests/Admin/UpdateDiseaseRequest.php
+ *
+ * Purpose:
+ *   Validates partial updates for PUT/PATCH /api/v1/admin/diseases/{id}.
+ *   {"is_active": true} doubles as the re-activation action.
+ */
 class UpdateDiseaseRequest extends FormRequest
 {
+    /**
+     * Admin middleware already handled permission.
+     */
     public function authorize(): bool
     {
         return true;
     }
 
     /**
+     * Partial-update pattern ('sometimes' everywhere). The unique name rule
+     * ignores the disease being updated so it can keep its own name.
+     * is_active toggling deactivates/reactivates the condition for owners
+     * and for future engine scoring.
+     *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array

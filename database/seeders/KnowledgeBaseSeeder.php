@@ -17,6 +17,11 @@ class KnowledgeBaseSeeder extends Seeder
      * poultry veterinary knowledge. Intended as realistic seed data for
      * engine testing — not a substitute for professional diagnosis.
      */
+    /**
+     * Seed the knowledge base. Order matters:
+     * symptoms and diseases first (parents), then rules and links
+     * (children referencing them). Called by DatabaseSeeder and by tests.
+     */
     public function run(): void
     {
         $this->resetKnowledgeBase();
@@ -29,6 +34,12 @@ class KnowledgeBaseSeeder extends Seeder
         $this->seedDiseaseRecommendations($diseases, $recommendations);
     }
 
+    /**
+     * Wipe existing knowledge-base rows so seeding is idempotent — running
+     * it twice never duplicates entries. Pivot tables are cleared first to
+     * avoid FK violations, parents last. (Users/gamefowls/assessments are
+     * untouched: this only manages diagnostic reference data.)
+     */
     private function resetKnowledgeBase(): void
     {
         DiseaseSymptomRule::query()->delete();
@@ -39,6 +50,13 @@ class KnowledgeBaseSeeder extends Seeder
     }
 
     /**
+     * @return array<string, Symptom>
+     */
+    /**
+     * Insert all 23 symptoms and return them keyed by short name
+     * (e.g. 'nasal_discharge') so later steps can reference them without
+     * knowing database IDs.
+     *
      * @return array<string, Symptom>
      */
     private function seedSymptoms(): array
@@ -81,6 +99,12 @@ class KnowledgeBaseSeeder extends Seeder
 
     /**
      * @return array<string, Disease>
+     */
+    /**
+     * Insert the 5 real gamefowl conditions with full owner-facing content.
+     * Content comes from general public poultry-veterinary knowledge.
+     *
+     * @return array<string, Disease> keyed by short name for later steps.
      */
     private function seedDiseases(): array
     {
@@ -161,6 +185,15 @@ class KnowledgeBaseSeeder extends Seeder
         })->all();
     }
 
+    /**
+     * Create the weighted rules: for each disease, attach its symptoms with
+     * importance weights. Weights are tuned so hallmark signs score 5 while
+     * general ones (appetite loss) stay low — this is what makes different
+     * diseases produce meaningfully different match scores in the engine.
+     *
+     * @param  array<string, Disease>  $diseases  keyed lookup from seedDiseases()
+     * @param  array<string, Symptom>  $symptoms  keyed lookup from seedSymptoms()
+     */
     private function seedRules(array $diseases, array $symptoms): void
     {
         $rules = [
@@ -224,6 +257,13 @@ class KnowledgeBaseSeeder extends Seeder
         }
     }
 
+    /**
+     * Link recommendations to the diseases they help with (21 links total),
+     * e.g. mosquito control -> Fowl Pox, dry litter -> Coccidiosis.
+     *
+     * @param  array<string, Disease>  $diseases
+     * @param  array<string, Recommendation>  $recommendations
+     */
     private function seedDiseaseRecommendations(array $diseases, array $recommendations): void
     {
         $links = [

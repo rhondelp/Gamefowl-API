@@ -1,5 +1,18 @@
 <?php
 
+/**
+ * File: database/migrations/2026_08_22_063521_create_gamefowls_table.php
+ *
+ * Purpose:
+ *   Creates the birds themselves. Key decisions baked into this schema:
+ *   - user_id FK uses RESTRICT on delete: a bird's history must never be
+ *     silently destroyed by deleting its owner.
+ *   - date_of_birth stored instead of age so age never goes stale.
+ *   - BOTH is_active AND softDeletes exist on purpose: is_active is an
+ *     owner-facing status toggle ("retired"), soft-delete protects against
+ *     accidental removal while keeping all health data queryable.
+ */
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

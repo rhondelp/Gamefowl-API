@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * File: database/migrations/0001_01_01_000001_create_cache_table.php
+ *
+ * Purpose:
+ *   Framework-shipped cache storage. Used by Laravel internals such as the
+ *   login rate limiter (throttle middleware reads its counters from the
+ *   configured cache store).
+ */
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

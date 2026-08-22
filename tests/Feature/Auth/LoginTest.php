@@ -6,6 +6,16 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * File: tests/Feature/Auth/LoginTest.php
+ *
+ * Purpose:
+ *   Feature tests for POST /api/v1/auth/login (AuthController::login).
+ *
+ * Covers: successful login issues a working Sanctum token; wrong password
+ * and unknown email produce the SAME error message (no account enumeration);
+ * the throttle:6,1 rate limiter blocks the 7th consecutive attempt with 429.
+ */
 class LoginTest extends TestCase
 {
     use RefreshDatabase;
