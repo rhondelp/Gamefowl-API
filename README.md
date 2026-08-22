@@ -141,6 +141,8 @@ Roles cannot be chosen at registration — every new account is an `owner`, and 
 
 Login attempts are rate-limited to 6 requests/minute; unknown-email and wrong-password failures return identical errors to prevent account enumeration.
 
+Profile self-service (Backend Milestone 9): a signed-in user can update their own name/email (`PATCH /auth/me`) and change their password (`PUT /auth/me/password`, current password required). A successful password change revokes every *other* active token — logging out other devices — while the requesting device stays signed in. Role and active status remain admin-only via `/admin/users/{id}`.
+
 ## Response Format
 
 Every JSON response follows one envelope:
@@ -183,6 +185,8 @@ All routes are prefixed `/api/v1`. Full request contracts live in the code (`rou
 | Method | Endpoint | Description |
 |---|---|---|
 | GET | `/auth/me` | Current authenticated user |
+| PATCH | `/auth/me` | Update own name/email (email unique except own row) |
+| PUT | `/auth/me/password` | Change own password; revokes other devices' tokens |
 | POST | `/auth/logout` | Revoke current token only |
 | GET | `/gamefowls` | Own birds, paginated; active-only by default, `?include_inactive=1` |
 | POST | `/gamefowls` | Create bird (`user_id` forced from token) |
@@ -297,9 +301,10 @@ Reset anytime with `php artisan db:seed --class=KnowledgeBaseSeeder`.
 php artisan test
 ```
 
-Current state: **79 tests, 639 assertions, all passing**, covering:
+Current state: **90 tests, 687 assertions, all passing**, covering:
 
 - Auth flows, rate limiting, enumeration-safe errors, role-injection resistance
+- Profile self-service: own name/email update (uniqueness ignores the caller's own row), password change requiring the current password, other-device token revocation
 - Gamefowl CRUD with per-owner isolation and spoof-proof `user_id`
 - Knowledge-base authorization (23-route admin sweep), rule uniqueness, weight bounds
 - The diagnostic engine's formula verified against hand-calculated seeded examples (rounding included)
@@ -326,8 +331,12 @@ Current state: **79 tests, 639 assertions, all passing**, covering:
 - [x] Milestone 5 — Diagnostic engine (unit-tested in isolation)
 - [x] Milestone 6 — Health Assessment API (submit → score → persist → retrieve)
 - [x] Milestone 7 — Health History API (merged timeline + derived status)
-- [x] Milestone 8 — Admin API (user management, dashboard) ← backend complete
+- [x] Milestone 8 — Admin API (user management, dashboard)
+- [x] Backend Milestone 9 — Profile self-service (`PATCH /auth/me`, `PUT /auth/me/password`)
+- [ ] Mobile Milestone 15 revisited — wire Settings-screen editing to this endpoint (separate repository)
 - [ ] Milestone 9+ — React Native mobile app (separate repository)
+
+> **Numbering note:** "Milestone 9" exists on both roadmaps — here it labels the backend profile-self-service increment ("Backend Milestone 9"), while the mobile roadmap's Milestone 9 begins the React Native app. The two sequences are independent; mobile's read-only Settings screen is its Milestone 15.
 
 ## Capstone Context
 

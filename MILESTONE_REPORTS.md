@@ -363,11 +363,40 @@ The `User` model had carried the soft-delete *column* since Milestone 2 but was 
 
 ---
 
+## Backend Milestone 9 — Profile Self-Service
+
+> **Numbering note:** "Milestone 9" also exists on the mobile roadmap (start of the React Native app), and the Settings screen there is mobile Milestone 15. To keep the two sequences distinguishable, this backend increment is labeled **Backend Milestone 9**.
+
+**Status:** Complete & verified locally
+**Date:** 2026-08-23
+**Commit:** `feat(auth): add profile self-update and password change endpoints`
+
+Triggered by mobile Milestone 15: the Settings screen shipped read-only because no endpoint existed for a user to update their own profile.
+
+### Endpoints (`auth:sanctum`, any role)
+| Method | Endpoint | Notes |
+|---|---|---|
+| PATCH | `/api/v1/auth/me` | Update own name/email; email unique except the caller's own row |
+| PUT | `/api/v1/auth/me/password` | Requires current password; new password follows registration rules |
+
+### Key decisions
+- Extended `AuthController` instead of adding a `ProfileController`: six small account/session methods stay cohesive under `/auth/*`; extraction deferred until real account management (email verification, deletion) exists.
+- Controllers assign an explicit allow-list from `validated()` only — `role`/`is_active`/`status`/`deleted_at` keys in a payload are inert even if FormRequest rules ever loosen (defense in depth on top of `$fillable`). Active status on users IS soft-delete state (M8), so those payload keys can never deactivate an account here; role/status remain admin-only via `/admin/users/{id}`.
+- `current_password` verified with a manual `Hash::check` closure — Laravel's built-in CurrentPassword rule validates through the default web/session guard, which doesn't exist under stateless Sanctum token auth.
+- Password change revokes ALL other Sanctum tokens for the user while keeping the requesting token valid (lost-device/stolen-token hygiene without logging out the device that just passed the correct-password challenge).
+- Email uniqueness via `Rule::unique('users')->ignore($this->user()->id)` — re-submitting one's own address is not falsely rejected.
+
+### Tests
+**Full suite: 90 passed (687 assertions)** — was 79/639 at M8. New coverage: 6 UpdateProfileTest + 5 ChangePasswordTest cases — success paths (name+email change, immediate visibility via GET /auth/me), cross-user email uniqueness vs own-email acceptance, role/active-status injection neutrality, wrong and missing current password, weak/mismatched confirmation, token-revocation semantics (other device's token → 401, requester still 200, old login fails / new login works), and 401s without tokens.
+
+---
+
 ## Backend completion checkpoint
 
-Milestones 1–8 complete: auth, gamefowl CRUD, knowledge base (+seeded data), diagnostic engine, health assessments with snapshots, merged health history/status, and the full admin surface. Next phase (Milestone 9+): React Native mobile app — separate repository.
+Milestones 1–8 complete: auth, gamefowl CRUD, knowledge base (+seeded data), diagnostic engine, health assessments with snapshots, merged health history/status, and the full admin surface. Backend Milestone 9 later added profile self-service (own name/email update + password change with session revocation). Next phase (mobile roadmap): React Native app — separate repository.
 
 ## Pending
 
+- Mobile repo, Milestone 15 revisited: wire the read-only Settings screen to `PATCH /api/v1/auth/me` + `PUT /api/v1/auth/me/password`
 - Milestone 9+ — React Native application (separate repo): authentication screens first
 
