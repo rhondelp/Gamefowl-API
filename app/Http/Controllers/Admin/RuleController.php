@@ -76,7 +76,6 @@ class RuleController extends Controller
                     'id' => $rule->id,
                     'disease_id' => $rule->disease_id,
                     'symptom_id' => $rule->symptom_id,
-                    // Casted to int by the model's casts().
                     'weight' => $rule->weight,
                 ],
             ],
@@ -84,6 +83,7 @@ class RuleController extends Controller
     }
 
     /**
+     *  Session   Backend Milestone 9: profile update endpoints Continue  opencode -s ses_fd4c4f77cffeP9Y7Espo0oCjkc
      * Remove a rule from the knowledge base. Future assessments stop seeing
      * this connection immediately; existing assessment results keep their
      * stored snapshots, so history is unaffected.

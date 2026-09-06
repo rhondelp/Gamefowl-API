@@ -18,17 +18,9 @@ use Illuminate\Http\JsonResponse;
  *     POST   /admin/recommendations        — create
  *     PUT    /admin/recommendations/{id}   — update / re-activate
  *     DELETE /admin/recommendations/{id}   — deactivate (never hard delete)
- *
- * How it fits into the project:
- *   Recommendations carry no scoring weight; they are guidance content that
- *   admins attach to diseases via Admin\DiseaseController and that ride
- *   along in assessment output for the owner's benefit.
  */
 class RecommendationController extends Controller
 {
-    /**
-     * List every recommendation, grouped visually by category then title.
-     */
     public function index(): JsonResponse
     {
         $recommendations = Recommendation::orderBy('category')->orderBy('title')->get();
