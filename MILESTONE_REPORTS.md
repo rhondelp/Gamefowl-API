@@ -391,12 +391,90 @@ Triggered by mobile Milestone 15: the Settings screen shipped read-only because 
 
 ---
 
+## Backend Milestone 10 — Forgot Password / Reset Password Flow
+
+> **Numbering note:** Mobile Milestone 9 covers the "Forgot Password?" link on the Login screen that calls the new API endpoint. This backend increment delivers that endpoint plus the web reset form, so it's labeled **Backend Milestone 10**.
+
+**Status:** Complete & verified locally
+**Date:** 2026-09-06
+**Commit:** To be committed (currently staged changes)
+
+Delivers a complete password reset flow using Laravel's built-in `Password` broker with web-based reset form, rate limiting, anti-enumeration, and token revocation.
+
+### Endpoints
+
+| Method | Endpoint | Auth | Throttle | Notes |
+|---|---|---|---|---|
+| POST | `/api/v1/auth/forgot-password` | none | 6 req/min | Sends reset link to registered email; **always returns success** (no enumeration) |
+| GET | `/reset-password?token=...&email=...` | web (CSRF) | — | Renders Blade form with hidden token/email fields |
+| POST | `/reset-password` | web (CSRF) | — | Processes form, calls `Password::reset()`, revokes ALL tokens, shows success page |
+
+### Request / Response contracts
+
+**POST /api/v1/auth/forgot-password**
+```json
+// Request
+{ "email": "juan@example.com" }
+
+// Response (200 OK) — IDENTICAL for registered AND unregistered emails
+{
+  "success": true,
+  "message": "If an account with that email exists, a password reset link has been sent."
+}
+```
+
+**GET /reset-password?token=...&email=...** → Returns HTML form (Blade)
+
+**POST /reset-password** (form-data)
+- Fields: `token`, `email`, `password`, `password_confirmation`
+- Validation: `password` required, min:8, confirmed
+- Success: Renders `auth.reset-password-success` Blade view
+- Failure: Re-renders form with errors, preserves token/email
+
+### Key decisions
+
+- **Anti-enumeration is mandatory**: `/api/v1/auth/forgot-password` returns the exact same 200 success payload whether the email exists in `users` or not. The `ResetPassword` notification is only queued for real users (verified via `Notification::fake()` in tests).
+- **Rate limiting**: `throttle:6,1` middleware on the API endpoint — 6 requests per minute per IP. Exceeding returns 429 with `Retry-After` header.
+- **Token revocation on reset**: The `Password::reset()` callback deletes **all** Sanctum tokens (`$user->tokens()->delete()`), matching M9's security posture for the authenticated change-password flow. Old password stops working; new password logs in; all prior devices signed out.
+- **Laravel's `Password` broker**: Used `Password::sendResetLink()` (API) and `Password::reset()` (web) — no custom token generation/storage. Tokens are single-use (Laravel invalidates on successful reset).
+- **Web routes outside `/api/v1`**: The reset form lives at `/reset-password` under the `web` middleware group (CSRF, session). This is intentional — the emailed link opens in a browser, not the mobile app.
+- **`ResetPassword::createUrlUsing()` override**: In `AppServiceProvider::boot()`, the reset link URL is customized to point to the web route with query params: `http://localhost/reset-password?token={token}&email={email}`.
+- **Blade views**: `reset-password.blade.php` (form with hidden token/email, validation error display, accessible styling) and `reset-password-success.blade.php` (confirmation page with login link).
+- **`.env` fix**: `MAIL_PASSWORD` must be quoted when it contains spaces (`"cenn vdng uuxg mfwz"`).
+
+### Files added / modified
+
+**New files:**
+- `app/Http/Requests/Auth/ForgotPasswordRequest.php` — validates `email` (required, email format only; no existence check)
+- `resources/views/auth/reset-password.blade.php` — reset form
+- `resources/views/auth/reset-password-success.blade.php` — success confirmation
+- `tests/Feature/Auth/ForgotPasswordTest.php` — 5 tests
+- `tests/Feature/Auth/ResetPasswordWebTest.php` — 7 tests
+
+**Modified files:**
+- `routes/api.php` — added `POST /auth/forgot-password` with `throttle:6,1`
+- `routes/web.php` — added GET/POST `/reset-password` routes with full logic
+- `app/Http/Controllers/Auth/AuthController.php` — added `forgotPassword()` method
+- `app/Providers/AppServiceProvider.php` — added `ResetPassword::createUrlUsing()` in `boot()`
+
+### Tests
+
+**Full suite: 103 passed (789 assertions)** — was 90/687 at M9.
+New coverage (13 tests):
+- **ForgotPasswordTest** (5): registered email sends notification + success payload; unregistered email returns identical success payload (anti-enumeration verified); invalid email format 422; missing email 422; rate limiting blocks 7th request with 429.
+- **ResetPasswordWebTest** (7): valid token + matching email updates password, revokes all tokens, old password fails, new password logs in; invalid token redisplays form with error; expired token (documented placeholder); mismatched confirmation fails validation; short password fails validation; reused token fails on second attempt (single-use); GET form without token shows empty form.
+
+All 13 new tests pass. Existing 90 tests unchanged.
+
+---
+
 ## Backend completion checkpoint
 
-Milestones 1–8 complete: auth, gamefowl CRUD, knowledge base (+seeded data), diagnostic engine, health assessments with snapshots, merged health history/status, and the full admin surface. Backend Milestone 9 later added profile self-service (own name/email update + password change with session revocation). Next phase (mobile roadmap): React Native app — separate repository.
+Milestones 1–8 complete: auth, gamefowl CRUD, knowledge base (+seeded data), diagnostic engine, health assessments with snapshots, merged health history/status, and the full admin surface. Backend Milestone 9 added profile self-service (own name/email update + password change with session revocation). Backend Milestone 10 delivers the complete forgot/reset password flow. Next phase (mobile roadmap): React Native app — separate repository.
 
 ## Pending
 
 - Mobile repo, Milestone 15 revisited: wire the read-only Settings screen to `PATCH /api/v1/auth/me` + `PUT /api/v1/auth/me/password`
+- Mobile Milestone 9: "Forgot Password?" link on Login screen calling `POST /api/v1/auth/forgot-password`
 - Milestone 9+ — React Native application (separate repo): authentication screens first
 

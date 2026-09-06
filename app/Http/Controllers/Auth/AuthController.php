@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\UpdatePasswordRequest;
@@ -12,6 +13,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -69,6 +71,36 @@ class AuthController extends Controller
                 'token' => $token,
             ],
         ], 201);
+    }
+
+    /**
+     * Send a password reset link to the user's email.
+     *
+     * This is a public, unauthenticated endpoint. It uses Laravel's built-in
+     * Password broker which handles token generation, hashing, and expiry.
+     * The broker's sendResetLink() method intentionally returns the SAME
+     * status regardless of whether the email exists in the database — this
+     * prevents account enumeration. We do NOT branch on the broker's return
+     * value here; we always return a success response with a generic message.
+     *
+     * Rate-limited to 6 requests per minute (same as login) to prevent
+     * email-bombing a victim's inbox.
+     */
+    public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
+    {
+        $status = Password::sendResetLink(
+            $request->only('email')
+        );
+
+        // Always return the same generic success response to prevent
+        // account enumeration. The $status will be
+        // Password::RESET_LINK_SENT on success, or
+        // Password::INVALID_USER when the email doesn't exist — but we
+        // intentionally ignore the difference.
+        return response()->json([
+            'success' => true,
+            'message' => 'If an account with that email exists, a password reset link has been sent.',
+        ]);
     }
 
     /**

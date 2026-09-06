@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -29,10 +30,16 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Bootstrap services after all providers registered. Nothing needed yet.
+     * Bootstrap services after all providers registered.
+     *
+     * Override the default reset password URL generation to point to our
+     * backend-hosted web form instead of a frontend SPA URL. The link will
+     * be: {APP_URL}/reset-password?token={token}&email={email}
      */
     public function boot(): void
     {
-        //
+        ResetPassword::createUrlUsing(function (object $notifiable, string $token): string {
+            return config('app.url') . "/reset-password?token={$token}&email={$notifiable->getEmailForPasswordReset()}";
+        });
     }
 }
