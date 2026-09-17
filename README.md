@@ -90,6 +90,7 @@ cd Gamefowl-API
 composer install
 cp .env.example .env
 php artisan key:generate
+php artisan serve --host=192.168.8.112
 ```
 
 Configure PostgreSQL credentials in `.env`:
