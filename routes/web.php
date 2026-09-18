@@ -52,6 +52,32 @@ Route::post('/reset-password', function () {
     return view('auth.reset-password-success');
 })->name('password.update');
 
+/**
+ * Public landing page — project overview, feature list, and APK download CTA.
+ */
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('home');
+
+/**
+ * Mobile app download.
+ *
+ * No Android build exists yet, so this serves a styled "Coming Soon" page
+ * instead of a dead link or a 404. The landing page's download button points
+ * here, so the URL stays stable once a real build lands.
+ */
+Route::get('/download/apk', function () {
+    // TODO: once the first APK build exists, serve the file from here instead
+    // of the placeholder view, e.g.:
+    //
+    //   $path = storage_path('app/public/releases/gamefowl-latest.apk');
+    //
+    //   if (! file_exists($path)) {
+    //       return view('download-apk');   // fall back to Coming Soon
+    //   }
+    //
+    //   return response()->download($path, 'gamefowl.apk', [
+    //       'Content-Type' => 'application/vnd.android.package-archive',
+    //   ]);
+    return view('download-apk');
+})->name('apk.download');

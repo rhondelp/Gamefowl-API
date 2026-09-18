@@ -144,8 +144,6 @@
             Your password has been reset. <strong>You can now log in to the GAMEFOWL app</strong> using your new password.
         </p>
 
-        <a href="/login" class="btn">Go to Login</a>
-
         <div class="footer">
             <p>All previous sessions have been logged out for security.</p>
         </div>

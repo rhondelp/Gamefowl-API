@@ -17,6 +17,7 @@ Rule-based expert system backend for early gamefowl disease detection and health
 - [Authentication & Roles](#authentication--roles)
 - [Response Format](#response-format)
 - [API Reference (v1)](#api-reference-v1)
+- [Public Pages](#public-pages)
 - [The Diagnostic Engine](#the-diagnostic-engine)
 - [Health Status Labels](#health-status-labels)
 - [Data Model](#data-model)
@@ -219,6 +220,19 @@ All gamefowl-scoped routes enforce per-owner isolation: accessing another owner'
 | POST | `/admin/rules` | Attach `(disease_id, symptom_id, weight)` — unique pair enforced, weight 1–5 |
 | PUT / DELETE | `/admin/rules/{id}` | Adjust weight / detach pair |
 
+## Public Pages
+
+Server-rendered Blade pages served through the `web` middleware group (`routes/web.php`) — not part of the JSON API, no authentication, no `/api/v1` prefix.
+
+| Method | Route | Description |
+|---|---|---|
+| GET | `/` | Public landing page — project overview, key features, tech stack, APK download button, capstone attribution |
+| GET | `/download/apk` | Placeholder download endpoint — renders a styled "Coming Soon" page pending the first APK build |
+| GET | `/reset-password` | Password-reset form the emailed link points at (token + email prefilled from the query string) |
+| POST | `/reset-password` | Processes the reset; revokes all Sanctum tokens on success |
+
+`/download/apk` is the stable public download URL: the landing page's button already points at it, so wiring the real file (`response()->download(...)`) later needs no front-end change. The `// TODO:` in `routes/web.php` marks the exact spot.
+
 ## The Diagnostic Engine
 
 Core logic: `app/Services/ExpertSystem/DiagnosticEngine.php` — isolated from HTTP, unit-tested against seeded data.
@@ -334,6 +348,7 @@ Current state: **90 tests, 687 assertions, all passing**, covering:
 - [x] Milestone 7 — Health History API (merged timeline + derived status)
 - [x] Milestone 8 — Admin API (user management, dashboard)
 - [x] Backend Milestone 9 — Profile self-service (`PATCH /auth/me`, `PUT /auth/me/password`)
+- [x] Public landing page at `GET /` plus the `GET /download/apk` placeholder ([Public Pages](#public-pages)) — real APK serving pending the first Android build
 - [ ] Mobile Milestone 15 revisited — wire Settings-screen editing to this endpoint (separate repository)
 - [ ] Milestone 9+ — React Native mobile app (separate repository)
 
