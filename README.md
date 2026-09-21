@@ -233,6 +233,7 @@ Server-rendered Blade pages served through the `web` middleware group (`routes/w
 | GET | `/documentation` | Password form for the expert-system documentation page (skipped once unlocked) |
 | POST | `/documentation` | Checks the shared `DOCS_PASSWORD`; unlocks the page for the rest of the browser session. Throttled to 10 attempts/min |
 | GET | `/documentation/view` | The documentation itself; redirects to the password form until unlocked |
+| GET | `/documentation/technical` | Code-level companion to `/documentation/view`, behind the same password |
 
 `/download/apk` is the stable public download URL: the landing page's button already points at it, so wiring the real file (`response()->download(...)`) later needs no front-end change. The `// TODO:` in `routes/web.php` marks the exact spot.
 
@@ -276,6 +277,7 @@ The empty state disappears and the release timeline renders automatically — no
 - **Password:** set `DOCS_PASSWORD` in `.env`. The key is listed in `.env.example`; the value never goes in Git. It is one shared static password, a visibility gate rather than an auth system, and while it is empty the page cannot be unlocked.
 - **Diagrams** are plain HTML/CSS with no JavaScript library or CDN, so they render offline and reflow on phones.
 - **Accuracy:** the page's tables and knowledge tree are drawn from a snapshot of the seeded knowledge base in `config/documentation.php`. `tests/Feature/DocumentationPageTest.php` checks that snapshot against `KnowledgeBaseSeeder` and recomputes every quoted score with the real engine, so a seeder change that makes the page wrong fails the suite. Update the snapshot and the page's worked examples together.
+- **Technical companion:** `/documentation/technical` is the code-level walkthrough of `DiagnosticEngine.php` and its connected files, behind the same password and cross-linked with the overview. Its code excerpts are read from the source files at render time (`App\Support\CodeExcerpt`), and `tests/Feature/TechnicalDocumentationPageTest.php` recomputes its worked examples against the real engine and endpoint.
 
 ## The Diagnostic Engine
 

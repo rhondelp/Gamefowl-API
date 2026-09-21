@@ -105,14 +105,15 @@ Route::get('/download/apk', function () {
  * panel member. It is NOT meant to protect sensitive data, and the page holds
  * none: it explains the seeded knowledge base and the scoring formula.
  *
- *   GET  /documentation       -> password form (skipped once unlocked)
- *   POST /documentation       -> checks the password, flags the session
- *   GET  /documentation/view  -> the documentation itself (EnsureDocsUnlocked)
+ *   GET  /documentation            -> password form (skipped once unlocked)
+ *   POST /documentation            -> checks the password, flags the session
+ *   GET  /documentation/view       -> the plain-language overview (EnsureDocsUnlocked)
+ *   GET  /documentation/technical  -> the code-level walkthrough (EnsureDocsUnlocked)
  *
  * The unlock flag lives in the server-side session (the browser only holds the
  * encrypted session cookie), so it can't be forged client-side, and it lasts
  * until the session expires (SESSION_LIFETIME) instead of asking again on
- * every visit.
+ * every visit. Both pages share the one flag: unlocking either unlocks both.
  */
 Route::get('/documentation', function () {
     if (session('docs_unlocked') === true) {
@@ -144,7 +145,10 @@ Route::post('/documentation', function () {
     request()->session()->regenerate();
     session(['docs_unlocked' => true]);
 
-    return redirect()->route('docs.show');
+    // Back to the page that sent the visitor here (EnsureDocsUnlocked stores
+    // it), so a shared link to the technical page lands there after the
+    // password; the overview otherwise.
+    return redirect()->intended(route('docs.show'));
 })->middleware('throttle:10,1')->name('docs.unlock');
 
 Route::get('/documentation/view', function () {
@@ -152,3 +156,7 @@ Route::get('/documentation/view', function () {
         'knowledgeBase' => config('documentation.knowledge_base'),
     ]);
 })->middleware(EnsureDocsUnlocked::class)->name('docs.show');
+
+Route::get('/documentation/technical', function () {
+    return view('documentation.technical');
+})->middleware(EnsureDocsUnlocked::class)->name('docs.technical');
