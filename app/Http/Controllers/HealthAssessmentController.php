@@ -4,12 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreHealthAssessmentRequest;
 use App\Http\Resources\HealthAssessmentResource;
+use App\Models\Disease;
 use App\Models\Gamefowl;
 use App\Models\HealthAssessment;
+use App\Models\Recommendation;
 use App\Models\Symptom;
+use App\Services\ExpertSystem\DiagnosisMatch;
 use App\Services\ExpertSystem\DiagnosticEngine;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -53,11 +57,14 @@ class HealthAssessmentController extends Controller
      *     owner's bird (or an unknown ID) is a generic 404, then authorize.
      *  2. Validate input via StoreHealthAssessmentRequest (symptom IDs must
      *     exist AND be active).
-     *  3. Run the DiagnosticEngine to get ranked matches.
+     *  3. Run the DiagnosticEngine to get ranked matches, then look up the
+     *     care recommendations linked to each suggested disease (guidance
+     *     only — the engine's scores are used as-is).
      *  4. In ONE database transaction: create the assessment row, attach
      *     the chosen symptoms WITH name snapshots, and save one result row
-     *     per ranked disease. If anything throws mid-way, the transaction
-     *     rolls back everything (tested: no partial rows survive).
+     *     per ranked disease WITH its care-advice snapshot. If anything
+     *     throws mid-way, the transaction rolls back everything (tested: no
+     *     partial rows survive).
      *  5. Return the complete record via HealthAssessmentResource (201).
      */
     public function store(StoreHealthAssessmentRequest $request, int $gamefowlId): JsonResponse
@@ -76,7 +83,11 @@ class HealthAssessmentController extends Controller
         // the transaction below.
         $matches = $this->engine->diagnose($symptomIds);
 
-        $assessment = DB::transaction(function () use ($gamefowl, $validated, $symptomIds, $symptomNames, $matches) {
+        // Care-advice snapshots per suggested disease, also resolved once
+        // up front (disease_id => list).
+        $recommendations = $this->snapshotRecommendations($matches);
+
+        $assessment = DB::transaction(function () use ($gamefowl, $validated, $symptomIds, $symptomNames, $matches, $recommendations) {
             // Snapshot age/sex: client values win if provided; otherwise we
             // copy from the live bird right now ("at assessment" semantics).
             $assessment = $gamefowl->healthAssessments()->create([
@@ -108,6 +119,7 @@ class HealthAssessmentController extends Controller
                     'missing_symptoms' => $match->missingSymptoms,
                     'severity_at_assessment' => $match->severity,
                     'vet_warning_at_assessment' => $match->vetWarning,
+                    'recommendations' => $recommendations[$match->diseaseId] ?? [],
                 ]);
             }
 
@@ -139,6 +151,45 @@ class HealthAssessmentController extends Controller
             'message' => 'Health assessment retrieved successfully.',
             'data' => new HealthAssessmentResource($assessment),
         ]);
+    }
+
+    /**
+     * Copy the care advice for every suggested disease, in ONE query: each
+     * disease's linked recommendations that are ACTIVE right now, in the
+     * order an admin linked them (pivot id), as plain title/content/category
+     * values. Stored on the result row, so later edits, deactivations, or
+     * unlinks in the knowledge base never change a saved assessment.
+     *
+     * @param  Collection<int, DiagnosisMatch>  $matches  engine output; only
+     *         the disease IDs are read, never the scores
+     * @return array<int, array<int, array{id: int, title: string, content: string, category: string}>>
+     *         disease_id => ordered snapshot list; a disease with no active
+     *         advice linked maps to an empty list
+     */
+    private function snapshotRecommendations(Collection $matches): array
+    {
+        if ($matches->isEmpty()) {
+            return [];
+        }
+
+        return Disease::query()
+            ->whereIn('id', $matches->pluck('diseaseId'))
+            ->with(['recommendations' => fn ($query) => $query
+                ->active()
+                ->orderBy('disease_recommendations.id')])
+            ->get()
+            ->mapWithKeys(fn (Disease $disease) => [
+                $disease->id => $disease->recommendations
+                    ->map(fn (Recommendation $recommendation) => [
+                        'id' => $recommendation->id,
+                        'title' => $recommendation->title,
+                        'content' => $recommendation->content,
+                        'category' => $recommendation->category,
+                    ])
+                    ->values()
+                    ->all(),
+            ])
+            ->all();
     }
 
     /**

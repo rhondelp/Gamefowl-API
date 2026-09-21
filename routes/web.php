@@ -53,10 +53,20 @@ Route::post('/reset-password', function () {
 })->name('password.update');
 
 /**
- * Public landing page — project overview, feature list, and APK download CTA.
+ * Public landing page — project overview, feature list, app changelog, and
+ * APK download CTA.
+ *
+ * The changelog is data, not markup: entries live in config/changelog.php
+ * (newest first) and the view loops over them, so publishing a release means
+ * adding one array block there and nothing else. It tracks public Android
+ * app releases only — not backend milestones. Empty until the first APK
+ * ships, at which point the view swaps its empty state for the timeline.
  */
 Route::get('/', function () {
-    return view('welcome');
+    return view('welcome', [
+        'releases' => config('changelog.releases', []),
+        'upcomingVersion' => config('changelog.upcoming_version', 'v1.0.0'),
+    ]);
 })->name('home');
 
 /**

@@ -6,6 +6,7 @@ use App\Models\Disease;
 use App\Models\Gamefowl;
 use App\Models\HealthAssessment;
 use App\Models\HealthAssessmentResult;
+use App\Models\Recommendation;
 use App\Models\Symptom;
 use App\Models\User;
 use App\Services\ExpertSystem\DiagnosticEngine;
@@ -25,7 +26,10 @@ use Tests\TestCase;
  * age/sex snapshots, cross-owner 404, input validation (empty list,
  * inactive/nonexistent symptoms rejected HERE, not silently by the engine),
  * view ownership, snapshot immutability after knowledge-base renames/
- * deactivations, and transaction rollback leaving zero partial rows.
+ * deactivations, care-recommendation snapshots (per-disease, active-only,
+ * link order, immune to later edits/unlinks; [] vs null for rows saved
+ * before the snapshot existed), and transaction rollback leaving zero
+ * partial rows.
  */
 class HealthAssessmentTest extends TestCase
 {
@@ -228,6 +232,170 @@ class HealthAssessmentTest extends TestCase
         $submittedNames = array_column($refetched['submitted_symptoms'], 'name');
         sort($submittedNames);
         $this->assertSame(['Bloody droppings', 'Pale comb'], $submittedNames);
+    }
+
+    public function test_new_assessment_snapshots_each_diseases_active_linked_recommendations(): void
+    {
+        [, $token, $bird] = $this->ownerWithBird();
+
+        // Deactivated advice must never be copied into a new assessment.
+        Recommendation::where('title', 'Reduce mosquito breeding sites around pens')
+            ->update(['is_active' => false]);
+
+        $data = $this->withToken($token)
+            ->postJson("/api/v1/gamefowls/{$bird->id}/health-assessments", [
+                'symptom_ids' => [
+                    $this->symptomId('Bloody droppings'),
+                    $this->symptomId('Pale comb'),
+                    $this->symptomId('Wart-like scabs on comb or wattles'),
+                ],
+            ])
+            ->assertCreated()
+            ->json('data');
+
+        // Coccidiosis 38 (rank 1) and Fowl Pox 31 (rank 2): each result
+        // carries ITS OWN disease's advice, in the order it was linked.
+        $this->assertSame(
+            ['Coccidiosis', 'Fowl Pox'],
+            array_column(array_column($data['results'], 'possible_disease'), 'name')
+        );
+        $this->assertSame([
+            'Keep litter dry and replace soiled bedding',
+            'Provide clean water with electrolytes',
+            'Consult a licensed veterinarian before medicating',
+            'Monitor the flock twice daily and record new cases',
+        ], array_column($data['results'][0]['recommendations'], 'title'));
+        $this->assertSame([
+            'Apply antiseptic to visible lesions',
+            'Isolate affected birds immediately',
+            'Monitor the flock twice daily and record new cases',
+        ], array_column($data['results'][1]['recommendations'], 'title'));
+
+        // Full snapshot shape per entry.
+        $dryLitter = Recommendation::where('title', 'Keep litter dry and replace soiled bedding')->firstOrFail();
+        $this->assertSame([
+            'id' => $dryLitter->id,
+            'title' => $dryLitter->title,
+            'content' => $dryLitter->content,
+            'category' => 'hygiene',
+        ], $data['results'][0]['recommendations'][0]);
+
+        // Stored on the result row itself, and the detail endpoint returns
+        // the same snapshot.
+        $this->assertSame(
+            $data['results'][0]['recommendations'],
+            HealthAssessmentResult::where('disease_name', 'Coccidiosis')->firstOrFail()->recommendations
+        );
+
+        $this->withToken($token)
+            ->getJson("/api/v1/health-assessments/{$data['id']}")
+            ->assertOk()
+            ->assertJsonPath('data.results.0.recommendations', $data['results'][0]['recommendations'])
+            ->assertJsonPath('data.results.1.recommendations', $data['results'][1]['recommendations']);
+    }
+
+    public function test_recommendation_snapshots_survive_later_edits_deactivations_and_unlinks(): void
+    {
+        [, $token, $bird] = $this->ownerWithBird();
+
+        $symptomIds = [$this->symptomId('Bloody droppings'), $this->symptomId('Pale comb')];
+
+        $original = $this->withToken($token)
+            ->postJson("/api/v1/gamefowls/{$bird->id}/health-assessments", [
+                'symptom_ids' => $symptomIds,
+            ])
+            ->json('data');
+
+        $snapshot = collect($original['results'])
+            ->firstWhere('possible_disease.name', 'Coccidiosis')['recommendations'];
+        $this->assertCount(4, $snapshot);
+
+        // Admin reshapes Coccidiosis's advice after the assessment exists:
+        // edit one entry, deactivate one, unlink one, link a new one.
+        $coccidiosis = Disease::where('name', 'Coccidiosis')->firstOrFail();
+        Recommendation::where('title', 'Keep litter dry and replace soiled bedding')
+            ->update(['title' => 'Edited title', 'content' => 'Edited content', 'category' => 'environment']);
+        Recommendation::where('title', 'Provide clean water with electrolytes')
+            ->update(['is_active' => false]);
+        $coccidiosis->recommendations()->detach(
+            Recommendation::where('title', 'Consult a licensed veterinarian before medicating')->value('id')
+        );
+        $coccidiosis->recommendations()->attach(
+            Recommendation::where('title', 'Isolate affected birds immediately')->value('id')
+        );
+
+        $refetched = $this->withToken($token)
+            ->getJson('/api/v1/health-assessments/'.$original['id'])
+            ->assertOk()
+            ->json('data');
+
+        $this->assertSame(
+            $snapshot,
+            collect($refetched['results'])->firstWhere('possible_disease.name', 'Coccidiosis')['recommendations'],
+            'A past assessment must keep showing exactly the advice recorded that day.'
+        );
+        $this->assertSame('Keep litter dry and replace soiled bedding', $snapshot[0]['title']);
+        $this->assertSame('hygiene', $snapshot[0]['category']);
+
+        // The knowledge base really did change: a NEW assessment gets the
+        // current advice, so the old one is frozen by its snapshot alone.
+        $fresh = $this->withToken($token)
+            ->postJson("/api/v1/gamefowls/{$bird->id}/health-assessments", [
+                'symptom_ids' => $symptomIds,
+            ])
+            ->assertCreated()
+            ->json('data');
+
+        $this->assertSame([
+            'Edited title',
+            'Monitor the flock twice daily and record new cases',
+            'Isolate affected birds immediately',
+        ], array_column(
+            collect($fresh['results'])->firstWhere('possible_disease.name', 'Coccidiosis')['recommendations'],
+            'title'
+        ));
+    }
+
+    public function test_disease_without_active_recommendations_snapshots_an_empty_list(): void
+    {
+        [, $token, $bird] = $this->ownerWithBird();
+
+        Disease::where('name', 'Coccidiosis')->firstOrFail()->recommendations()->detach();
+
+        $this->withToken($token)
+            ->postJson("/api/v1/gamefowls/{$bird->id}/health-assessments", [
+                'symptom_ids' => [$this->symptomId('Bloody droppings')],
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.results.0.possible_disease.name', 'Coccidiosis')
+            ->assertJsonPath('data.results.0.recommendations', []);
+    }
+
+    public function test_results_saved_before_the_recommendation_snapshot_report_null(): void
+    {
+        [, $token, $bird] = $this->ownerWithBird();
+
+        // A row written before the column existed: no recommendations key.
+        $assessment = HealthAssessment::create(['gamefowl_id' => $bird->id]);
+        $assessment->results()->create([
+            'disease_id' => Disease::where('name', 'Coccidiosis')->value('id'),
+            'disease_name' => 'Coccidiosis',
+            'rank' => 1,
+            'match_score' => 21,
+            'matched_symptoms' => [],
+            'missing_symptoms' => [],
+            'severity_at_assessment' => 'severe',
+        ]);
+
+        $result = $this->withToken($token)
+            ->getJson("/api/v1/health-assessments/{$assessment->id}")
+            ->assertOk()
+            ->json('data.results.0');
+
+        // null ("not recorded") is deliberately distinct from [] (recorded,
+        // nothing linked) so clients can explain the difference.
+        $this->assertArrayHasKey('recommendations', $result);
+        $this->assertNull($result['recommendations']);
     }
 
     public function test_failure_mid_persist_leaves_no_partial_assessment(): void

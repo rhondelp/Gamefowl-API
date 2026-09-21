@@ -226,12 +226,45 @@ Server-rendered Blade pages served through the `web` middleware group (`routes/w
 
 | Method | Route | Description |
 |---|---|---|
-| GET | `/` | Public landing page — project overview, key features, tech stack, APK download button, capstone attribution |
+| GET | `/` | Public landing page — project overview, key features, tech stack, **changelog / version history**, APK download button, capstone attribution |
 | GET | `/download/apk` | Placeholder download endpoint — renders a styled "Coming Soon" page pending the first APK build |
 | GET | `/reset-password` | Password-reset form the emailed link points at (token + email prefilled from the query string) |
 | POST | `/reset-password` | Processes the reset; revokes all Sanctum tokens on success |
 
 `/download/apk` is the stable public download URL: the landing page's button already points at it, so wiring the real file (`response()->download(...)`) later needs no front-end change. The `// TODO:` in `routes/web.php` marks the exact spot.
+
+### Changelog on the landing page
+
+The landing page carries a **Changelog** section for the Android app's public release history — version, date, a one-line summary, and user-facing bullets per release.
+
+That list is **data, not markup**. Entries live in [`config/changelog.php`](config/changelog.php) under the `releases` key; the Blade view loops over them, so nothing in the page's HTML changes when a release is added.
+
+**⚠️ This is an app-release changelog, not a development log — the two are deliberately separate:**
+
+| | Tracks | Lives in | Updated when |
+|---|---|---|---|
+| **App changelog** (public) | Android app releases, described for end users | `config/changelog.php` | An **APK is actually released** |
+| **Development Status** (internal) | Backend/API engineering milestones | This README + `MILESTONE_REPORTS.md` | A backend milestone completes |
+
+A backend milestone shipping is **not** a release. Do not backfill `config/changelog.php` with milestone history — visitors to the landing page care about what changed in the app they installed, not about API build order.
+
+`releases` is currently `[]`, so the page renders a styled empty state naming `upcoming_version` (`v1.0.0`) as what's next. When the first APK ships, add one entry:
+
+```php
+'releases' => [
+    [
+        'version' => 'v1.0.0',
+        'date' => '2026-10-01',
+        'summary' => 'First public release of the GAMEFOWL Android app.',
+        'highlights' => [
+            'Register your birds and keep their profiles in one place',
+            'Check a bird for early signs of illness from the symptoms you observe',
+        ],
+    ],
+],
+```
+
+The empty state disappears and the release timeline renders automatically — no template changes.
 
 ## The Diagnostic Engine
 
@@ -310,6 +343,8 @@ Reset anytime with `php artisan db:seed --class=KnowledgeBaseSeeder`.
 | `max_results` | `EXPERTSYSTEM_MAX_RESULTS` | `5` | Max ranked matches returned per diagnosis |
 | `recent_assessment_days` | `EXPERTSYSTEM_RECENT_ASSESSMENT_DAYS` | `14` | Age window before an assessment is flagged stale in health-status |
 
+`config/changelog.php` holds the landing page's app-release changelog (`releases`, newest first, plus `upcoming_version`) — presentational content rather than behavior, so it has no env overrides. See [Changelog on the landing page](#changelog-on-the-landing-page).
+
 ## Testing
 
 ```bash
@@ -348,7 +383,10 @@ Current state: **90 tests, 687 assertions, all passing**, covering:
 - [x] Milestone 7 — Health History API (merged timeline + derived status)
 - [x] Milestone 8 — Admin API (user management, dashboard)
 - [x] Backend Milestone 9 — Profile self-service (`PATCH /auth/me`, `PUT /auth/me/password`)
+- [x] Backend Milestone 10 — Forgot/reset password flow (`POST /auth/forgot-password` + the `/reset-password` web form)
 - [x] Public landing page at `GET /` plus the `GET /download/apk` placeholder ([Public Pages](#public-pages)) — real APK serving pending the first Android build
+- [x] App-release changelog scaffold on the landing page, sourced from `config/changelog.php` ([Changelog on the landing page](#changelog-on-the-landing-page)) — empty state until the first APK ships
+- [ ] `v1.0.0` — first public Android release; add its changelog entry when the APK ships (separate repository)
 - [ ] Mobile Milestone 15 revisited — wire Settings-screen editing to this endpoint (separate repository)
 - [ ] Milestone 9+ — React Native mobile app (separate repository)
 

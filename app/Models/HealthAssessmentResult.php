@@ -16,11 +16,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * Snapshot design (important):
  *   This row intentionally COPIES data instead of referencing it live:
- *   disease_name, matched/missing symptom NAMES (JSON), severity, and vet
- *   warning are all frozen at submission time. If an admin later renames a
- *   disease or deactivates a symptom, historical assessments still read
- *   exactly what was recorded that day. The disease_id FK remains only so
- *   admins can trace which knowledge-base entry produced the result.
+ *   disease_name, matched/missing symptom NAMES (JSON), severity, vet
+ *   warning, and the linked care recommendations (JSON) are all frozen at
+ *   submission time. If an admin later renames a disease, deactivates a
+ *   symptom, or edits/unlinks a recommendation, historical assessments still
+ *   read exactly what was recorded that day. The disease_id FK remains only
+ *   so admins can trace which knowledge-base entry produced the result.
+ *
+ *   recommendations is NULL on rows saved before that snapshot existed
+ *   ("not recorded"), and [] when the disease had no active advice linked.
  */
 
 class HealthAssessmentResult extends Model
@@ -35,13 +39,15 @@ class HealthAssessmentResult extends Model
         'missing_symptoms',
         'severity_at_assessment',
         'vet_warning_at_assessment',
+        'recommendations',
     ];
 
     /**
      * Type conversions:
      * - rank/match_score become integers for arithmetic and comparisons
-     * - matched_symptoms / missing_symptoms are stored as JSON strings and
-     *   transparently decoded into PHP arrays (and re-encoded on save)
+     * - matched_symptoms / missing_symptoms / recommendations are stored as
+     *   JSON strings and transparently decoded into PHP arrays (and
+     *   re-encoded on save); a NULL recommendations column stays null
      *
      * @return array<string, string>
      */
@@ -52,6 +58,7 @@ class HealthAssessmentResult extends Model
             'match_score' => 'integer',
             'matched_symptoms' => 'array',
             'missing_symptoms' => 'array',
+            'recommendations' => 'array',
         ];
     }
 

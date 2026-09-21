@@ -25,6 +25,11 @@ class HealthAssessmentResultResource extends JsonResource
      * the bird also showed X"). Both lists are symptom NAMES from the stored
      * JSON snapshot, so they read correctly forever.
      *
+     * recommendations is the care advice linked to this disease at
+     * submission time (id/title/content/category each), also read from the
+     * stored snapshot. It is null for assessments saved before that snapshot
+     * existed ("not recorded") and [] when no active advice was linked.
+     *
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -41,6 +46,7 @@ class HealthAssessmentResultResource extends JsonResource
             'missing_symptoms' => collect($this->missing_symptoms)->pluck('name')->values(),
             'severity_at_assessment' => $this->severity_at_assessment,
             'vet_warning_at_assessment' => $this->vet_warning_at_assessment,
+            'recommendations' => $this->recommendations,
         ];
     }
 }

@@ -311,6 +311,224 @@
             background: var(--primary);
         }
 
+        /* ── Changelog / version history ──────────────────────────── */
+        .timeline {
+            position: relative;
+            margin-top: 26px;
+            padding-left: 28px;
+        }
+
+        /* The rail. Fades out at the bottom so the oldest entry doesn't
+           look like the list was cut off. */
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 14px;
+            bottom: 6px;
+            width: 2px;
+            border-radius: 2px;
+            background: linear-gradient(to bottom,
+                    var(--primary-light),
+                    rgba(22, 163, 74, 0.22) 65%,
+                    rgba(22, 163, 74, 0));
+        }
+
+        .release {
+            position: relative;
+            margin-bottom: 14px;
+            background: var(--white);
+            border: 1px solid rgba(226, 232, 228, 0.9);
+            border-radius: 18px;
+            box-shadow: 0 4px 14px rgba(23, 33, 27, 0.04);
+        }
+
+        .release:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Node on the rail, aligned to the first line of the header. */
+        .release::before {
+            content: '';
+            position: absolute;
+            left: -28px;
+            top: 22px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--white);
+            border: 3px solid var(--border);
+        }
+
+        .release[open]::before,
+        .release.is-latest::before {
+            border-color: var(--primary);
+        }
+
+        .release.is-latest::before {
+            box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.13);
+        }
+
+        .release-head {
+            display: block;
+            padding: 18px 20px;
+            cursor: pointer;
+            list-style: none;
+            border-radius: 18px;
+        }
+
+        .release-head::-webkit-details-marker {
+            display: none;
+        }
+
+        .release-head:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.28);
+        }
+
+        .release-top {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 7px;
+        }
+
+        .release-label {
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+        }
+
+        .release-date {
+            font-size: 12px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .pill-latest {
+            padding: 3px 10px;
+            border-radius: 999px;
+            background: rgba(22, 163, 74, 0.10);
+            border: 1px solid rgba(22, 163, 74, 0.20);
+            color: var(--primary-dark);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* Chevron pushed to the far right of the header row. */
+        .release-chevron {
+            margin-left: auto;
+            width: 18px;
+            height: 18px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+        }
+
+        .release[open] .release-chevron {
+            transform: rotate(180deg);
+        }
+
+        .release-summary {
+            display: block;
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.75;
+        }
+
+        /* Inset by the header's padding so the divider doesn't run the
+           full width of the card. */
+        .release-body {
+            margin: 0 20px;
+            padding: 0 0 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .release-points {
+            list-style: none;
+            margin: 16px 0 0;
+        }
+
+        .release-points li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 9px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.75;
+        }
+
+        .release-points li:last-child {
+            margin-bottom: 0;
+        }
+
+        .release-points li::before {
+            content: '';
+            position: absolute;
+            left: 3px;
+            top: 9px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary);
+            opacity: 0.5;
+        }
+
+        .release-points code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11.5px;
+            background: rgba(22, 163, 74, 0.08);
+            color: var(--primary-dark);
+            padding: 2px 6px;
+            border-radius: 6px;
+            overflow-wrap: anywhere;
+        }
+
+        /* Empty state — shown until the first APK release lands. Dashed
+           border signals "awaiting content" rather than a broken section. */
+        .changelog-empty {
+            text-align: center;
+            background: var(--white);
+            border: 1px dashed rgba(22, 163, 74, 0.32);
+            border-radius: 20px;
+            padding: 40px 24px;
+            margin-top: 26px;
+        }
+
+        .changelog-empty .card-icon {
+            margin: 0 auto 14px;
+        }
+
+        .changelog-empty h3 {
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+            margin-bottom: 8px;
+        }
+
+        .changelog-empty p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            max-width: 440px;
+            margin: 0 auto;
+        }
+
+        .version-tag {
+            display: inline-block;
+            padding: 2px 9px;
+            border-radius: 7px;
+            background: rgba(22, 163, 74, 0.10);
+            border: 1px solid rgba(22, 163, 74, 0.20);
+            color: var(--primary-dark);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
         /* ── Download section ─────────────────────────────────────── */
         .download {
             text-align: center;
@@ -642,6 +860,67 @@
                 <span class="badge"><span class="dot"></span> React Native / Expo</span>
                 <span class="badge"><span class="dot"></span> REST API (JSON)</span>
             </div>
+        </div>
+    </section>
+
+    <!-- ══ Changelog ═════════════════════════════════════════════ -->
+    <section id="changelog">
+        <div class="wrap">
+            <div class="section-label">App Releases</div>
+            <h2>Changelog</h2>
+            <p class="section-intro">
+                Version history for the GAMEFOWL Android app — what changed in each release, newest first.
+            </p>
+
+            @if (empty($releases))
+                <div class="changelog-empty">
+                    <div class="card-icon">🗓️</div>
+                    <h3>No releases yet</h3>
+                    <p>
+                        The first public build, <span class="version-tag">{{ $upcomingVersion }}</span>, is on the
+                        way. Once the app ships, every release and what changed in it will be listed here.
+                    </p>
+                </div>
+            @else
+                <div class="timeline">
+                    @foreach ($releases as $index => $release)
+                        <details class="release{{ $index === 0 ? ' is-latest' : '' }}" {{ $index === 0 ? 'open' : '' }}>
+                            {{-- <summary> takes phrasing content, so the header uses spans, not div/p. --}}
+                            <summary class="release-head">
+                                <span class="release-top">
+                                    <span class="release-label">{{ $release['version'] }}</span>
+
+                                    @if ($index === 0)
+                                        <span class="pill-latest">Latest</span>
+                                    @endif
+
+                                    <span class="release-date">
+                                        {{ \Illuminate\Support\Carbon::parse($release['date'])->format('M j, Y') }}
+                                    </span>
+
+                                    <svg class="release-chevron" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                        viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                    </svg>
+                                </span>
+
+                                <span class="release-summary">{{ $release['summary'] }}</span>
+                            </summary>
+
+                            <div class="release-body">
+                                <ul class="release-points">
+                                    @foreach ($release['highlights'] as $highlight)
+                                        {{-- Highlights are developer-authored constants in config/changelog.php
+                                             and intentionally carry inline <code>/<em> markup. --}}
+                                        <li>{!! $highlight !!}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </details>
+                    @endforeach
+                </div>
+            @endif
         </div>
     </section>
 
