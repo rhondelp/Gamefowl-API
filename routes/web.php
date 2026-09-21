@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureDocsUnlocked;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
@@ -91,3 +92,63 @@ Route::get('/download/apk', function () {
     //   ]);
     return view('download-apk');
 })->name('apk.download');
+
+/**
+ * Expert-system documentation — a long-form, plain-language explainer of the
+ * knowledge base, the scoring formula, and the assessment flow, written for
+ * the capstone adviser and panel.
+ *
+ * INTENTIONALLY LIGHTWEIGHT GATE: one static password shared by everyone
+ * (DOCS_PASSWORD in .env, read through config/documentation.php), with no
+ * per-user accounts and no hashing. Its only job is to keep the page off
+ * casual public view while staying effortless to share with an adviser or
+ * panel member. It is NOT meant to protect sensitive data, and the page holds
+ * none: it explains the seeded knowledge base and the scoring formula.
+ *
+ *   GET  /documentation       -> password form (skipped once unlocked)
+ *   POST /documentation       -> checks the password, flags the session
+ *   GET  /documentation/view  -> the documentation itself (EnsureDocsUnlocked)
+ *
+ * The unlock flag lives in the server-side session (the browser only holds the
+ * encrypted session cookie), so it can't be forged client-side, and it lasts
+ * until the session expires (SESSION_LIFETIME) instead of asking again on
+ * every visit.
+ */
+Route::get('/documentation', function () {
+    if (session('docs_unlocked') === true) {
+        return redirect()->route('docs.show');
+    }
+
+    return view('documentation.gate', [
+        'isConfigured' => filled(config('documentation.password')),
+    ]);
+})->name('docs.gate');
+
+Route::post('/documentation', function () {
+    $attributes = request()->validate([
+        'password' => 'required|string|max:255',
+    ]);
+
+    $expected = (string) config('documentation.password');
+
+    // Fails closed: while DOCS_PASSWORD is unset, nothing unlocks the page.
+    // hash_equals() is a constant-time comparison; there is no real threat
+    // model here, it simply costs nothing.
+    if ($expected === '' || ! hash_equals($expected, $attributes['password'])) {
+        return redirect()->route('docs.gate')
+            ->withErrors(['password' => 'That password is incorrect. Please try again.']);
+    }
+
+    // Fresh session ID whenever a session gains access (standard session-
+    // fixation hygiene), then remember the unlock for the rest of it.
+    request()->session()->regenerate();
+    session(['docs_unlocked' => true]);
+
+    return redirect()->route('docs.show');
+})->middleware('throttle:10,1')->name('docs.unlock');
+
+Route::get('/documentation/view', function () {
+    return view('documentation.show', [
+        'knowledgeBase' => config('documentation.knowledge_base'),
+    ]);
+})->middleware(EnsureDocsUnlocked::class)->name('docs.show');

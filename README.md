@@ -222,7 +222,7 @@ All gamefowl-scoped routes enforce per-owner isolation: accessing another owner'
 
 ## Public Pages
 
-Server-rendered Blade pages served through the `web` middleware group (`routes/web.php`) — not part of the JSON API, no authentication, no `/api/v1` prefix.
+Server-rendered Blade pages served through the `web` middleware group (`routes/web.php`) — not part of the JSON API, no user authentication, no `/api/v1` prefix. (The documentation page sits behind one shared password; see [Documentation page](#documentation-page).)
 
 | Method | Route | Description |
 |---|---|---|
@@ -230,6 +230,9 @@ Server-rendered Blade pages served through the `web` middleware group (`routes/w
 | GET | `/download/apk` | Placeholder download endpoint — renders a styled "Coming Soon" page pending the first APK build |
 | GET | `/reset-password` | Password-reset form the emailed link points at (token + email prefilled from the query string) |
 | POST | `/reset-password` | Processes the reset; revokes all Sanctum tokens on success |
+| GET | `/documentation` | Password form for the expert-system documentation page (skipped once unlocked) |
+| POST | `/documentation` | Checks the shared `DOCS_PASSWORD`; unlocks the page for the rest of the browser session. Throttled to 10 attempts/min |
+| GET | `/documentation/view` | The documentation itself; redirects to the password form until unlocked |
 
 `/download/apk` is the stable public download URL: the landing page's button already points at it, so wiring the real file (`response()->download(...)`) later needs no front-end change. The `// TODO:` in `routes/web.php` marks the exact spot.
 
@@ -265,6 +268,14 @@ A backend milestone shipping is **not** a release. Do not backfill `config/chang
 ```
 
 The empty state disappears and the release timeline renders automatically — no template changes.
+
+### Documentation page
+
+`/documentation` is a password-protected, plain-language explainer of the expert system, written for the capstone adviser and panel: the knowledge base (with a knowledge-tree diagram), the scoring formula with worked examples on the seeded data, the end-to-end health-check flow, why results are "possible" rather than a diagnosis, a full example walkthrough, and an FAQ. The landing page links to it ("View Full Documentation").
+
+- **Password:** set `DOCS_PASSWORD` in `.env`. The key is listed in `.env.example`; the value never goes in Git. It is one shared static password, a visibility gate rather than an auth system, and while it is empty the page cannot be unlocked.
+- **Diagrams** are plain HTML/CSS with no JavaScript library or CDN, so they render offline and reflow on phones.
+- **Accuracy:** the page's tables and knowledge tree are drawn from a snapshot of the seeded knowledge base in `config/documentation.php`. `tests/Feature/DocumentationPageTest.php` checks that snapshot against `KnowledgeBaseSeeder` and recomputes every quoted score with the real engine, so a seeder change that makes the page wrong fails the suite. Update the snapshot and the page's worked examples together.
 
 ## The Diagnostic Engine
 
@@ -345,6 +356,8 @@ Reset anytime with `php artisan db:seed --class=KnowledgeBaseSeeder`.
 
 `config/changelog.php` holds the landing page's app-release changelog (`releases`, newest first, plus `upcoming_version`) — presentational content rather than behavior, so it has no env overrides. See [Changelog on the landing page](#changelog-on-the-landing-page).
 
+`config/documentation.php` holds the documentation page's shared password (`password`, from `DOCS_PASSWORD`) and its knowledge-base snapshot. See [Documentation page](#documentation-page).
+
 ## Testing
 
 ```bash
@@ -386,6 +399,7 @@ Current state: **90 tests, 687 assertions, all passing**, covering:
 - [x] Backend Milestone 10 — Forgot/reset password flow (`POST /auth/forgot-password` + the `/reset-password` web form)
 - [x] Public landing page at `GET /` plus the `GET /download/apk` placeholder ([Public Pages](#public-pages)) — real APK serving pending the first Android build
 - [x] App-release changelog scaffold on the landing page, sourced from `config/changelog.php` ([Changelog on the landing page](#changelog-on-the-landing-page)) — empty state until the first APK ships
+- [x] Password-protected expert-system documentation page at `/documentation` for the adviser and panel ([Documentation page](#documentation-page))
 - [ ] `v1.0.0` — first public Android release; add its changelog entry when the APK ships (separate repository)
 - [ ] Mobile Milestone 15 revisited — wire Settings-screen editing to this endpoint (separate repository)
 - [ ] Milestone 9+ — React Native mobile app (separate repository)
