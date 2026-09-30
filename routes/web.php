@@ -73,25 +73,30 @@ Route::get('/', function () {
 /**
  * Mobile app download.
  *
- * No Android build exists yet, so this serves a styled "Coming Soon" page
- * instead of a dead link or a 404. The landing page's download button points
- * here, so the URL stays stable once a real build lands.
+ * /download/apk is the page the landing page links to: it shows a download
+ * button when the APK exists and falls back to "Coming Soon" when it doesn't.
+ * /download/apk/file streams the actual file. To ship a new build, drop it in
+ * storage/app/public/releases/ and update $apkFile below.
  */
-Route::get('/download/apk', function () {
-    // TODO: once the first APK build exists, serve the file from here instead
-    // of the placeholder view, e.g.:
-    //
-    //   $path = storage_path('app/public/releases/gamefowl-latest.apk');
-    //
-    //   if (! file_exists($path)) {
-    //       return view('download-apk');   // fall back to Coming Soon
-    //   }
-    //
-    //   return response()->download($path, 'gamefowl.apk', [
-    //       'Content-Type' => 'application/vnd.android.package-archive',
-    //   ]);
-    return view('download-apk');
+$apkFile = 'gamefowl-1.0.0-2.apk';
+$apkPath = storage_path('app/public/releases/'.$apkFile);
+
+Route::get('/download/apk', function () use ($apkPath) {
+    $available = file_exists($apkPath);
+
+    return view('download-apk', [
+        'available' => $available,
+        'sizeMb' => $available ? round(filesize($apkPath) / 1048576, 1) : null,
+    ]);
 })->name('apk.download');
+
+Route::get('/download/apk/file', function () use ($apkPath, $apkFile) {
+    abort_unless(file_exists($apkPath), 404);
+
+    return response()->download($apkPath, $apkFile, [
+        'Content-Type' => 'application/vnd.android.package-archive',
+    ]);
+})->name('apk.file');
 
 /**
  * Expert-system documentation — a long-form, plain-language explainer of the

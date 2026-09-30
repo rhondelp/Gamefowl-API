@@ -55,13 +55,26 @@ return [
      * styled empty state while this is empty, naming 'upcoming_version'
      * below as what's next.
      */
-    'releases' => [],
+    'releases' => [
+        [
+            'version' => 'v1.0.0',
+            'date' => '2026-10-01',
+            'summary' => 'First public release of the GAMEFOWL Android app.',
+            'highlights' => [
+                'Create an owner account and sign in securely, with password reset by email',
+                'Register your birds with breed, age, sex, weight, and notes',
+                'Check a bird for possible illness from the symptoms you observe, with ranked results',
+                'See matched symptoms, severity, care recommendations, and a vet warning for serious conditions',
+                'Review every past health check and manual record on a per-bird timeline',
+            ],
+        ],
+    ],
 
     /*
      * The planned first public version, shown in the changelog's empty
      * state. Once that release ships it moves into 'releases' above and
      * this becomes the *next* planned version.
      */
-    'upcoming_version' => 'v1.0.0',
+    'upcoming_version' => 'v1.1.0',
 
 ];

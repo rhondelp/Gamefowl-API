@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App Download Coming Soon | GAMEFOWL</title>
+    <title>{{ $available ? 'Download the App' : 'App Download Coming Soon' }} | GAMEFOWL</title>
     <meta name="robots" content="noindex">
 
     <!-- Poppins Font (matches the landing and password-reset pages) -->
@@ -114,6 +114,16 @@
             text-transform: uppercase;
         }
 
+        .status-pill.ready {
+            background: rgba(22, 163, 74, 0.08);
+            border-color: rgba(22, 163, 74, 0.20);
+            color: var(--primary-dark);
+        }
+
+        .status-pill.ready .dot {
+            background: var(--primary);
+        }
+
         .status-pill .dot {
             width: 7px;
             height: 7px;
@@ -212,23 +222,45 @@
             <p>Expert System for Gamefowl Health</p>
         </div>
 
-        <div class="status-pill"><span class="dot"></span> Coming Soon</div>
+        @if ($available)
+            <div class="status-pill ready"><span class="dot"></span> Now Available</div>
 
-        <h2>The Android app isn't ready to download yet</h2>
+            <h2>Get the GAMEFOWL Android app</h2>
 
-        <p class="message">
-            The GAMEFOWL mobile app is still in development. <strong>The download will go live here</strong>
-            as soon as the first Android build is released — this same link will serve the APK, so feel free
-            to bookmark it.
-        </p>
+            <p class="message">
+                Download the APK and open it on your Android phone to install. If prompted,
+                <strong>allow installs from this source</strong> in your phone's settings.
+            </p>
 
-        <a class="btn" href="{{ url('/') }}">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-            </svg>
-            Back to Home
-        </a>
+            <a class="btn" href="{{ route('apk.file') }}" download>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                Download APK ({{ $sizeMb }} MB)
+            </a>
+
+            <a class="secondary-link" href="{{ url('/') }}">← Back to Home</a>
+        @else
+            <div class="status-pill"><span class="dot"></span> Coming Soon</div>
+
+            <h2>The Android app isn't ready to download yet</h2>
+
+            <p class="message">
+                The GAMEFOWL mobile app is still in development. <strong>The download will go live here</strong>
+                as soon as the first Android build is released — this same link will serve the APK, so feel free
+                to bookmark it.
+            </p>
+
+            <a class="btn" href="{{ url('/') }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                </svg>
+                Back to Home
+            </a>
+        @endif
 
         {{-- <a class="secondary-link" href="https://github.com/rhondelp/Gamefowl-MobileApp" target="_blank"
             rel="noopener noreferrer">

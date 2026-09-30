@@ -503,6 +503,26 @@
             overflow-wrap: anywhere;
         }
 
+        .release-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin-top: 14px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary-dark);
+            text-decoration: none;
+        }
+
+        .release-download:hover {
+            text-decoration: underline;
+        }
+
+        .release-download svg {
+            width: 16px;
+            height: 16px;
+        }
+
         /* Empty state — shown until the first APK release lands. Dashed
            border signals "awaiting content" rather than a broken section. */
         .changelog-empty {
@@ -947,6 +967,18 @@
                                         <li>{!! $highlight !!}</li>
                                     @endforeach
                                 </ul>
+
+                                {{-- Only the latest build is hosted, so only it gets a download link. --}}
+                                @if ($index === 0)
+                                    <a class="release-download" href="{{ route('apk.download') }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="2" stroke="currentColor" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                        </svg>
+                                        Download {{ $release['version'] }} APK
+                                    </a>
+                                @endif
                             </div>
                         </details>
                     @endforeach
@@ -988,7 +1020,7 @@
                 Expert System for Early Bird Disease Monitoring and Analysis in Gamefowl · Capstone Project
             </div>
 
-            <div class="repo-links">
+            {{-- <div class="repo-links">
                 <a href="https://github.com/rhondelp/Gamefowl-API" target="_blank" rel="noopener noreferrer">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                         <path
@@ -1013,9 +1045,9 @@
                     </svg>
                     Documentation
                 </a>
-            </div>
+            </div> --}}
 
-            <p class="disclaimer">
+            <p class="disclaimer mt-4">
                 <strong>⚠ Disclaimer:</strong> This system is an educational/support tool and is
                 <strong>not a replacement for a licensed veterinarian</strong>. All diagnostic output is presented
                 as a <em>possible</em> condition based on submitted symptoms — never as a confirmed diagnosis.
