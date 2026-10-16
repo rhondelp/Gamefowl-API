@@ -112,7 +112,7 @@ createdb -U postgres gamefowl          # or use any Postgres client
 php artisan migrate --seed
 ```
 
-`php artisan db:seed --class=KnowledgeBaseSeeder` loads/refreshes only the diagnostic knowledge base (idempotent — it wipes and re-seeds that data). Run the dev server:
+`php artisan db:seed --class=KnowledgeBaseSeeder` loads/refreshes only the diagnostic knowledge base. It is idempotent and safe on a populated database: rows are upserted by name, nothing is deleted, and existing rule weights are kept (prefix with `SEED_RESET_WEIGHTS=true` to restore the seeded weights). Run the dev server:
 
 ```bash
 php artisan serve                      # http://127.0.0.1:8000
@@ -344,7 +344,7 @@ Eleven tables total. Key conventions:
 | Recommendations | 10 — hygiene / isolation / nutrition / monitoring / medication / vaccination / environment |
 | Disease ↔ recommendation links | 21 |
 
-Reset anytime with `php artisan db:seed --class=KnowledgeBaseSeeder`.
+Re-run anytime with `php artisan db:seed --class=KnowledgeBaseSeeder` to add missing entries; add `SEED_RESET_WEIGHTS=true` in front to also reset admin-edited rule weights.
 
 ## Configuration
 

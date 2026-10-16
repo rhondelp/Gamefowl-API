@@ -21,39 +21,41 @@ class KnowledgeBaseSeeder extends Seeder
      * Seed the knowledge base. Order matters:
      * symptoms and diseases first (parents), then rules and links
      * (children referencing them). Called by DatabaseSeeder and by tests.
+     *
+     * Safe on a populated database: nothing is ever deleted (assessment
+     * history references symptoms/diseases through RESTRICT FKs). Parents
+     * are upserted by name, so re-running never duplicates rows. Existing
+     * rule weights are left alone unless SEED_RESET_WEIGHTS=true, so
+     * admin-tuned weights survive a re-seed:
+     *
+     *   SEED_RESET_WEIGHTS=true php artisan db:seed --class=KnowledgeBaseSeeder
      */
     public function run(): void
     {
-        $this->resetKnowledgeBase();
+        DB::transaction(function () {
+            $symptoms = $this->seedSymptoms();
+            $diseases = $this->seedDiseases();
+            $recommendations = $this->seedRecommendations();
 
-        $symptoms = $this->seedSymptoms();
-        $diseases = $this->seedDiseases();
-        $recommendations = $this->seedRecommendations();
-
-        $this->seedRules($diseases, $symptoms);
-        $this->seedDiseaseRecommendations($diseases, $recommendations);
+            $this->seedRules($diseases, $symptoms);
+            $this->seedDiseaseRecommendations($diseases, $recommendations);
+        });
     }
 
     /**
-     * Wipe existing knowledge-base rows so seeding is idempotent — running
-     * it twice never duplicates entries. Pivot tables are cleared first to
-     * avoid FK violations, parents last. (Users/gamefowls/assessments are
-     * untouched: this only manages diagnostic reference data.)
+     * Whether to overwrite weights on rules that already exist. Off by
+     * default so a re-seed only fills in missing rules.
      */
-    private function resetKnowledgeBase(): void
+    private function shouldResetWeights(): bool
     {
-        DiseaseSymptomRule::query()->delete();
-        DB::table('disease_recommendations')->delete();
-        Symptom::query()->delete();
-        Recommendation::query()->delete();
-        Disease::query()->delete();
+        return filter_var(env('SEED_RESET_WEIGHTS', false), FILTER_VALIDATE_BOOL);
     }
 
     /**
      * @return array<string, Symptom>
      */
     /**
-     * Insert all 23 symptoms and return them keyed by short name
+     * Upsert all 23 symptoms (matched on name) and return them keyed by short name
      * (e.g. 'nasal_discharge') so later steps can reference them without
      * knowing database IDs.
      *
@@ -88,12 +90,10 @@ class KnowledgeBaseSeeder extends Seeder
         ];
 
         return collect($symptoms)->mapWithKeys(function (array $row) {
-            return [$row['key'] => Symptom::create([
-                'name' => $row['name'],
-                'description' => $row['description'],
-                'category' => $row['category'],
-                'severity' => $row['severity'],
-            ])];
+            return [$row['key'] => Symptom::updateOrCreate(
+                ['name' => $row['name']],
+                Arr::only($row, ['description', 'category', 'severity']),
+            )];
         })->all();
     }
 
@@ -101,7 +101,8 @@ class KnowledgeBaseSeeder extends Seeder
      * @return array<string, Disease>
      */
     /**
-     * Insert the 5 real gamefowl conditions with full owner-facing content.
+     * Upsert the 5 real gamefowl conditions (matched on name) with full
+     * owner-facing content.
      * Content comes from general public poultry-veterinary knowledge.
      *
      * @return array<string, Disease> keyed by short name for later steps.
@@ -159,9 +160,12 @@ class KnowledgeBaseSeeder extends Seeder
         ];
 
         return collect($diseases)->mapWithKeys(function (array $row) {
-            return [$row['key'] => Disease::create(Arr::only($row, [
-                'name', 'description', 'severity', 'general_info', 'recommended_action', 'prevention_info', 'vet_warning',
-            ]))];
+            return [$row['key'] => Disease::updateOrCreate(
+                ['name' => $row['name']],
+                Arr::only($row, [
+                    'description', 'severity', 'general_info', 'recommended_action', 'prevention_info', 'vet_warning',
+                ]),
+            )];
         })->all();
     }
 
@@ -181,7 +185,10 @@ class KnowledgeBaseSeeder extends Seeder
         ];
 
         return collect($recommendations)->mapWithKeys(function (array $row) {
-            return [$row['key'] => Recommendation::create(Arr::only($row, ['title', 'content', 'category']))];
+            return [$row['key'] => Recommendation::updateOrCreate(
+                ['title' => $row['title']],
+                Arr::only($row, ['content', 'category']),
+            )];
         })->all();
     }
 
@@ -190,6 +197,11 @@ class KnowledgeBaseSeeder extends Seeder
      * importance weights. Weights are tuned so hallmark signs score 5 while
      * general ones (appetite loss) stay low — this is what makes different
      * diseases produce meaningfully different match scores in the engine.
+     *
+     * Rules are matched on the unique (disease_id, symptom_id) pair, with
+     * both IDs resolved by name via the upserted parents. Missing rules are
+     * created; existing ones keep their (possibly admin-edited) weight
+     * unless shouldResetWeights() is true.
      *
      * @param  array<string, Disease>  $diseases  keyed lookup from seedDiseases()
      * @param  array<string, Symptom>  $symptoms  keyed lookup from seedSymptoms()
@@ -241,6 +253,8 @@ class KnowledgeBaseSeeder extends Seeder
             ],
         ];
 
+        $resetWeights = $this->shouldResetWeights();
+
         foreach ($rules as $diseaseKey => $symptomWeights) {
             $disease = $diseases[$diseaseKey] ?? null;
             if (! $disease instanceof Disease) {
@@ -248,11 +262,14 @@ class KnowledgeBaseSeeder extends Seeder
             }
 
             foreach ($symptomWeights as $symptomKey => $weight) {
-                DiseaseSymptomRule::create([
+                $pair = [
                     'disease_id' => $disease->id,
                     'symptom_id' => $symptoms[$symptomKey]->id,
-                    'weight' => $weight,
-                ]);
+                ];
+
+                $resetWeights
+                    ? DiseaseSymptomRule::updateOrCreate($pair, ['weight' => $weight])
+                    : DiseaseSymptomRule::firstOrCreate($pair, ['weight' => $weight]);
             }
         }
     }
@@ -260,6 +277,7 @@ class KnowledgeBaseSeeder extends Seeder
     /**
      * Link recommendations to the diseases they help with (21 links total),
      * e.g. mosquito control -> Fowl Pox, dry litter -> Coccidiosis.
+     * syncWithoutDetaching adds missing links and keeps any an admin added.
      *
      * @param  array<string, Disease>  $diseases
      * @param  array<string, Recommendation>  $recommendations
@@ -280,9 +298,9 @@ class KnowledgeBaseSeeder extends Seeder
                 continue;
             }
 
-            foreach ($recommendationKeys as $key) {
-                $disease->recommendations()->attach($recommendations[$key]->id);
-            }
+            $disease->recommendations()->syncWithoutDetaching(
+                collect($recommendationKeys)->map(fn (string $key) => $recommendations[$key]->id)->all()
+            );
         }
     }
 }
