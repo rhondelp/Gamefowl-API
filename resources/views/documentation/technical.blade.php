@@ -288,8 +288,8 @@
     $backLabel = 'Overview documentation';
 @endphp
 
-@section('title', 'Inside the Diagnostic Engine')
-@section('description', 'Code-level walkthrough of the GAMEFOWL diagnostic engine: DiagnosticEngine.php, its connected files, worked examples, and the unit tests that pin its behaviour.')
+@section('title', 'GAMEFOWL Technical Documentation')
+@section('description', 'Code-level walkthrough of the GAMEFOWL diagnostic engine: its source files, worked examples, and the unit tests that pin its behaviour.')
 
 @push('styles')
     @include('documentation.partials.technical-styles')

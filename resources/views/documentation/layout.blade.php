@@ -17,9 +17,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title') | GAMEFOWL Documentation</title>
-    <meta name="description" content="@yield('description')">
-    <meta name="robots" content="noindex, nofollow">
+@include('partials.seo', [
+    'title' => $__env->yieldContent('title'),
+    'description' => $__env->yieldContent('description'),
+    'noindex' => true,
+])
 
     <!-- Poppins Font (matches the landing and password-reset pages) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

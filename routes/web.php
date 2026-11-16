@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Middleware\EnsureDocsUnlocked;
+use App\Http\Middleware\SetNoIndexHeader;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
@@ -21,7 +23,7 @@ Route::get('/reset-password', function () {
         'token' => request()->query('token', ''),
         'email' => request()->query('email', ''),
     ]);
-})->name('password.reset');
+})->middleware(SetNoIndexHeader::class)->name('password.reset');
 
 Route::post('/reset-password', function () {
     $attributes = request()->validate([
@@ -51,7 +53,7 @@ Route::post('/reset-password', function () {
     }
 
     return view('auth.reset-password-success');
-})->name('password.update');
+})->middleware(SetNoIndexHeader::class)->name('password.update');
 
 /**
  * Public landing page — project overview, feature list, app changelog, and
@@ -104,7 +106,7 @@ Route::get('/download/apk/file', function () {
     return response()->download($apkPath, $apkFile, [
         'Content-Type' => 'application/vnd.android.package-archive',
     ]);
-})->name('apk.file');
+})->middleware(SetNoIndexHeader::class)->name('apk.file');
 
 /**
  * Expert-system documentation — a long-form, plain-language explainer of the
@@ -136,7 +138,7 @@ Route::get('/documentation', function () {
     return view('documentation.gate', [
         'isConfigured' => filled(config('documentation.password')),
     ]);
-})->name('docs.gate');
+})->middleware(SetNoIndexHeader::class)->name('docs.gate');
 
 Route::post('/documentation', function () {
     $attributes = request()->validate([
@@ -162,14 +164,72 @@ Route::post('/documentation', function () {
     // it), so a shared link to the technical page lands there after the
     // password; the overview otherwise.
     return redirect()->intended(route('docs.show'));
-})->middleware('throttle:10,1')->name('docs.unlock');
+})->middleware([SetNoIndexHeader::class, 'throttle:10,1'])->name('docs.unlock');
 
 Route::get('/documentation/view', function () {
     return view('documentation.show', [
         'knowledgeBase' => config('documentation.knowledge_base'),
     ]);
-})->middleware(EnsureDocsUnlocked::class)->name('docs.show');
+})->middleware([SetNoIndexHeader::class, EnsureDocsUnlocked::class])->name('docs.show');
 
 Route::get('/documentation/technical', function () {
     return view('documentation.technical');
-})->middleware(EnsureDocsUnlocked::class)->name('docs.technical');
+})->middleware([SetNoIndexHeader::class, EnsureDocsUnlocked::class])->name('docs.technical');
+
+/**
+ * SEO: robots.txt and sitemap.xml, generated so every URL comes from APP_URL.
+ *
+ * robots.txt keeps crawlers off the API, the token-based reset page and the
+ * APK binary. The download PAGE (/download/apk) stays crawlable, so only
+ * /download/apk/file is disallowed. /documentation is intentionally NOT listed
+ * (listing it would advertise it); SetNoIndexHeader + the noindex meta tag
+ * keep it out of search results instead.
+ *
+ * The sitemap lists public, indexable pages only. When you add a public page,
+ * add it to $pages below and pass a unique title/description to
+ * partials/seo in its view.
+ */
+Route::get('/robots.txt', function () {
+    $appUrl = rtrim((string) config('app.url'), '/');
+
+    $lines = [
+        'User-agent: *',
+        'Allow: /',
+        'Disallow: /api/',
+        'Disallow: /reset-password',
+        'Disallow: /download/apk/file',
+        '',
+        'Sitemap: '.$appUrl.'/sitemap.xml',
+    ];
+
+    return response(implode("\n", $lines)."\n", 200, [
+        'Content-Type' => 'text/plain; charset=UTF-8',
+        'Cache-Control' => 'public, max-age=3600',
+    ]);
+})->name('robots');
+
+Route::get('/sitemap.xml', function () {
+    $appUrl = rtrim((string) config('app.url'), '/');
+
+    // The landing page changes when its view or the changelog it renders does.
+    $homeModified = max(
+        filemtime(resource_path('views/welcome.blade.php')),
+        filemtime(config_path('changelog.php')),
+    );
+
+    $pages = [
+        [
+            'loc' => $appUrl.route('home', [], false),
+            'lastmod' => date('Y-m-d', $homeModified),
+        ],
+        [
+            'loc' => $appUrl.route('apk.download', [], false),
+            'lastmod' => Carbon::parse(config('apk.released_at'))->toDateString(),
+        ],
+    ];
+
+    return response()->view('seo.sitemap', ['pages' => $pages], 200, [
+        'Content-Type' => 'application/xml; charset=UTF-8',
+        'Cache-Control' => 'public, max-age=3600',
+    ]);
+})->name('sitemap');

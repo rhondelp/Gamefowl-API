@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Documentation | GAMEFOWL</title>
-    <meta name="robots" content="noindex, nofollow">
+@include('partials.seo', [
+    'title' => 'GAMEFOWL Documentation: Access',
+    'description' => 'Enter the shared password to open the GAMEFOWL expert-system documentation prepared for the capstone adviser and panel.',
+    'noindex' => true,
+])
 
     <!-- Poppins Font (matches the landing and password-reset pages) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

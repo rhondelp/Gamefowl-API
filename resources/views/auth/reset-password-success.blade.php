@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Reset Successful | GAMEFOWL API</title>
+@include('partials.seo', [
+    'title' => 'Password Reset Successful: GAMEFOWL',
+    'description' => 'Your GAMEFOWL password has been changed. Sign in to the app with your new password.',
+    'noindex' => true,
+])
     <style>
         * {
             box-sizing: border-box;

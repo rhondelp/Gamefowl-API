@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $available ? 'Download the App' : 'App Download Coming Soon' }} | GAMEFOWL</title>
-    <meta name="robots" content="noindex">
+@include('partials.seo', [
+    'title' => 'Download GAMEFOWL for Android (APK '.$apk['version'].')',
+    'description' => 'Download the GAMEFOWL Android APK to check gamefowl symptoms, get possible disease matches, and view care recommendations.',
+])
 
     <!-- Poppins Font (matches the landing and password-reset pages) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

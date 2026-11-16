@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GAMEFOWL | Expert System for Early Bird Disease Monitoring</title>
-    <meta name="description"
-        content="GAMEFOWL is a rule-based expert system that helps gamefowl owners screen their birds for early signs of disease through weighted symptom analysis.">
+@include('partials.seo', [
+    'title' => 'GAMEFOWL: Early Disease Monitoring for Gamefowl',
+    'description' => 'GAMEFOWL is an Android app that helps gamefowl owners recognize possible bird diseases early from observed symptoms, using a rule-based expert system.',
+])
 
     <!-- Poppins Font (matches the password-reset pages) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

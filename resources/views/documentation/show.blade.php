@@ -59,8 +59,8 @@
     ];
 @endphp
 
-@section('title', 'How the Expert System Works')
-@section('description', 'Plain-language documentation of the GAMEFOWL expert system: the knowledge base, the scoring formula, and the health-check flow.')
+@section('title', 'GAMEFOWL Documentation')
+@section('description', 'Documentation of the GAMEFOWL expert system: knowledge base, rules, and diagnostic formula.')
 
 @push('styles')
     @include('documentation.partials.overview-styles')
