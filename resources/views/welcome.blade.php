@@ -611,13 +611,6 @@
             color: var(--text-muted);
         }
 
-        /* The 64-char hash must wrap on phones instead of forcing a scroll. */
-        .download .meta.sha {
-            margin-top: 6px;
-            font-size: 11px;
-            overflow-wrap: anywhere;
-        }
-
         /* ── Footer ───────────────────────────────────────────────── */
         footer {
             border-top: 1px solid var(--border);
@@ -1040,10 +1033,6 @@
                     @endif
                     · Android 7.0+ · Free · Capstone release
                 </p>
-
-                @if ($apk['sha256'])
-                    <p class="meta sha">SHA-256: <code>{{ $apk['sha256'] }}</code></p>
-                @endif
             </div>
         </div>
     </section>
