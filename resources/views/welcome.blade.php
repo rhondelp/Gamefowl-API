@@ -434,6 +434,20 @@
             text-transform: uppercase;
         }
 
+        /* Release type label ("Improved", "Fixed", …) — neutral, so it never
+           competes with the green "Latest" pill. */
+        .pill-type {
+            padding: 3px 10px;
+            border-radius: 999px;
+            background: var(--background);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
         /* Chevron pushed to the far right of the header row. */
         .release-chevron {
             margin-left: auto;
@@ -595,6 +609,13 @@
             margin-top: 16px;
             font-size: 12px;
             color: var(--text-muted);
+        }
+
+        /* The 64-char hash must wrap on phones instead of forcing a scroll. */
+        .download .meta.sha {
+            margin-top: 6px;
+            font-size: 11px;
+            overflow-wrap: anywhere;
         }
 
         /* ── Footer ───────────────────────────────────────────────── */
@@ -945,6 +966,10 @@
                                         <span class="pill-latest">Latest</span>
                                     @endif
 
+                                    @isset($release['type'])
+                                        <span class="pill-type">{{ $release['type'] }}</span>
+                                    @endisset
+
                                     <span class="release-date">
                                         {{ \Illuminate\Support\Carbon::parse($release['date'])->format('M j, Y') }}
                                     </span>
@@ -1007,7 +1032,18 @@
                     Download APK for Android
                 </a>
 
-                <p class="meta">Android 7.0+ · Free · Capstone release</p>
+                <p class="meta">
+                    {{ $apk['version'] }}
+                    · {{ \Illuminate\Support\Carbon::parse($apk['released_at'])->format('M j, Y') }}
+                    @if ($apkSizeMb)
+                        · {{ $apkSizeMb }} MB
+                    @endif
+                    · Android 7.0+ · Free · Capstone release
+                </p>
+
+                @if ($apk['sha256'])
+                    <p class="meta sha">SHA-256: <code>{{ $apk['sha256'] }}</code></p>
+                @endif
             </div>
         </div>
     </section>

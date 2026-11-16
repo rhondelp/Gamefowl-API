@@ -227,7 +227,8 @@ Server-rendered Blade pages served through the `web` middleware group (`routes/w
 | Method | Route | Description |
 |---|---|---|
 | GET | `/` | Public landing page — project overview, key features, tech stack, **changelog / version history**, APK download button, capstone attribution |
-| GET | `/download/apk` | Placeholder download endpoint — renders a styled "Coming Soon" page pending the first APK build |
+| GET | `/download/apk` | APK download page — version, release date, size, SHA-256 and a download button (falls back to "Coming Soon" if the file is missing) |
+| GET | `/download/apk/file` | Streams the APK named by `APK_FILE` from `storage/app/public/releases/` |
 | GET | `/reset-password` | Password-reset form the emailed link points at (token + email prefilled from the query string) |
 | POST | `/reset-password` | Processes the reset; revokes all Sanctum tokens on success |
 | GET | `/documentation` | Password form for the expert-system documentation page (skipped once unlocked) |
@@ -235,7 +236,7 @@ Server-rendered Blade pages served through the `web` middleware group (`routes/w
 | GET | `/documentation/view` | The documentation itself; redirects to the password form until unlocked |
 | GET | `/documentation/technical` | Code-level companion to `/documentation/view`, behind the same password |
 
-`/download/apk` is the stable public download URL: the landing page's button already points at it, so wiring the real file (`response()->download(...)`) later needs no front-end change. The `// TODO:` in `routes/web.php` marks the exact spot.
+`/download/apk` is the stable public download URL. Which build it serves comes from [`config/apk.php`](config/apk.php) (`APK_FILE`, `APK_VERSION`, `APK_RELEASED_AT`, `APK_SHA256`); the size is read from the file. APKs are gitignored and uploaded to the server by hand; older builds stay in `storage/app/public/releases/` as an archive.
 
 ### Changelog on the landing page
 
@@ -358,6 +359,10 @@ Re-run anytime with `php artisan db:seed --class=KnowledgeBaseSeeder` to add mis
 
 `config/changelog.php` holds the landing page's app-release changelog (`releases`, newest first, plus `upcoming_version`) — presentational content rather than behavior, so it has no env overrides. See [Changelog on the landing page](#changelog-on-the-landing-page).
 
+`config/apk.php` names the APK that `/download/apk` serves plus its version, release date and SHA-256 (env: `APK_FILE`, `APK_VERSION`, `APK_RELEASED_AT`, `APK_SHA256`).
+
+`config/trustedproxy.php` reads `TRUSTED_PROXIES` so Laravel honours `X-Forwarded-Proto` behind the production HTTPS proxy; unset locally.
+
 `config/documentation.php` holds the documentation page's shared password (`password`, from `DOCS_PASSWORD`) and its knowledge-base snapshot. See [Documentation page](#documentation-page).
 
 ## Testing
@@ -399,7 +404,7 @@ Current state: **90 tests, 687 assertions, all passing**, covering:
 - [x] Milestone 8 — Admin API (user management, dashboard)
 - [x] Backend Milestone 9 — Profile self-service (`PATCH /auth/me`, `PUT /auth/me/password`)
 - [x] Backend Milestone 10 — Forgot/reset password flow (`POST /auth/forgot-password` + the `/reset-password` web form)
-- [x] Public landing page at `GET /` plus the `GET /download/apk` placeholder ([Public Pages](#public-pages)) — real APK serving pending the first Android build
+- [x] Public landing page at `GET /` plus the `GET /download/apk` APK download page ([Public Pages](#public-pages))
 - [x] App-release changelog scaffold on the landing page, sourced from `config/changelog.php` ([Changelog on the landing page](#changelog-on-the-landing-page)) — empty state until the first APK ships
 - [x] Password-protected expert-system documentation page at `/documentation` for the adviser and panel ([Documentation page](#documentation-page))
 - [ ] `v1.0.0` — first public Android release; add its changelog entry when the APK ships (separate repository)

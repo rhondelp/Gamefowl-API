@@ -183,6 +183,25 @@
             height: 17px;
         }
 
+        .release-meta {
+            margin-top: 14px;
+            font-size: 12px;
+            line-height: 1.7;
+            color: var(--text-muted);
+        }
+
+        .release-meta strong {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* The 64-char hash must wrap on phones instead of forcing a scroll. */
+        .release-meta.sha {
+            margin-top: 4px;
+            font-size: 11px;
+            overflow-wrap: anywhere;
+        }
+
         .secondary-link {
             display: inline-block;
             margin-top: 16px;
@@ -240,6 +259,16 @@
                 </svg>
                 Download APK ({{ $sizeMb }} MB)
             </a>
+
+            <p class="release-meta">
+                Version <strong>{{ $apk['version'] }}</strong>
+                · Released {{ \Illuminate\Support\Carbon::parse($apk['released_at'])->format('M j, Y') }}
+                · {{ $sizeMb }} MB
+            </p>
+
+            @if ($apk['sha256'])
+                <p class="release-meta sha">SHA-256: <code>{{ $apk['sha256'] }}</code></p>
+            @endif
 
             <a class="secondary-link" href="{{ url('/') }}">← Back to Home</a>
         @else

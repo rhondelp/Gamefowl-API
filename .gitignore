@@ -23,3 +23,7 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Mobile builds are uploaded to the server by hand, never committed.
+*.apk
+*.aab

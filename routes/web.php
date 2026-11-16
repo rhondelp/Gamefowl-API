@@ -64,9 +64,13 @@ Route::post('/reset-password', function () {
  * ships, at which point the view swaps its empty state for the timeline.
  */
 Route::get('/', function () {
+    $apkPath = storage_path('app/public/releases/'.basename(config('apk.file')));
+
     return view('welcome', [
         'releases' => config('changelog.releases', []),
         'upcomingVersion' => config('changelog.upcoming_version', 'v1.0.0'),
+        'apk' => config('apk'),
+        'apkSizeMb' => file_exists($apkPath) ? round(filesize($apkPath) / 1048576, 1) : null,
     ]);
 })->name('home');
 
@@ -75,22 +79,26 @@ Route::get('/', function () {
  *
  * /download/apk is the page the landing page links to: it shows a download
  * button when the APK exists and falls back to "Coming Soon" when it doesn't.
- * /download/apk/file streams the actual file. To ship a new build, drop it in
- * storage/app/public/releases/ and update $apkFile below.
+ * /download/apk/file streams the actual file. Which build is served (and its
+ * version, date and SHA-256) comes from config/apk.php / APK_* in .env — see
+ * that file for the release steps. Paths are resolved inside the closures,
+ * not at file load, so a cached route table never pins an old build.
+ * basename() keeps an env-supplied name from escaping the releases folder.
  */
-$apkFile = 'gamefowl-1.0.0-2.apk';
-$apkPath = storage_path('app/public/releases/'.$apkFile);
-
-Route::get('/download/apk', function () use ($apkPath) {
+Route::get('/download/apk', function () {
+    $apkPath = storage_path('app/public/releases/'.basename(config('apk.file')));
     $available = file_exists($apkPath);
 
     return view('download-apk', [
         'available' => $available,
         'sizeMb' => $available ? round(filesize($apkPath) / 1048576, 1) : null,
+        'apk' => config('apk'),
     ]);
 })->name('apk.download');
 
-Route::get('/download/apk/file', function () use ($apkPath, $apkFile) {
+Route::get('/download/apk/file', function () {
+    $apkFile = basename(config('apk.file'));
+    $apkPath = storage_path('app/public/releases/'.$apkFile);
     abort_unless(file_exists($apkPath), 404);
 
     return response()->download($apkPath, $apkFile, [

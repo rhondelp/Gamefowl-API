@@ -26,6 +26,8 @@
 | Entry shape:
 |   version    string  Semantic version, 'v' prefixed (e.g. 'v1.0.0')
 |   date       string  Release date, ISO-8601 (Y-m-d); formatted by the view
+|   type       string  Optional label shown beside the version
+|                      (e.g. 'New', 'Improved', 'Fixed')
 |   summary    string  One line — what this release is, readable on its own
 |   highlights array   3–6 short user-facing bullets ("what's new for you")
 |
@@ -56,6 +58,16 @@ return [
      * below as what's next.
      */
     'releases' => [
+        [
+            'version' => 'v1.0.2',
+            'date' => '2026-11-16',
+            'type' => 'Improved',
+            'summary' => 'Secure HTTPS connection and a faster startup.',
+            'highlights' => [
+                'Now connects securely over HTTPS via api.gamefowl.tech',
+                'Removed the intro video for faster startup',
+            ],
+        ],
         [
             'version' => 'v1.0.0',
             'date' => '2026-10-01',
