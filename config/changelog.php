@@ -59,6 +59,18 @@ return [
      */
     'releases' => [
         [
+            'version' => 'v1.0.4',
+            'date' => '2026-11-17',
+            'type' => 'Fixed',
+            'summary' => 'Layout fixes for navigation, keyboard, splash screen, and dashboard.',
+            'highlights' => [
+                "Bottom navigation no longer overlaps the phone's navigation buttons",
+                'Keyboard no longer covers login and sign-up fields',
+                'Splash screen logo display fixed',
+                'Dashboard layout and icons improved',
+            ],
+        ],
+        [
             'version' => 'v1.0.3',
             'date' => '2026-11-17',
             'type' => 'Fixed',
