@@ -59,6 +59,17 @@ return [
      */
     'releases' => [
         [
+            'version' => 'v1.1.0',
+            'date' => '2026-11-18',
+            'type' => 'Improved',
+            'summary' => 'Better support for tablets, foldables, and large screens.',
+            'highlights' => [
+                'Better layout on tablets, foldables and large screens',
+                'Lists show in multiple columns on wide screens',
+                'Screens now work in landscape on tablets',
+            ],
+        ],
+        [
             'version' => 'v1.0.4',
             'date' => '2026-11-17',
             'type' => 'Fixed',

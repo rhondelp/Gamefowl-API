@@ -1032,7 +1032,7 @@
                     @if ($apkSizeMb)
                         · {{ $apkSizeMb }} MB
                     @endif
-                    · Android 7.0+ · Free · Capstone release
+                    · Android phones and tablets · Android 7.0+ · Free · Capstone release
                 </p>
             </div>
         </div>
