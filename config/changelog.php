@@ -59,6 +59,15 @@ return [
      */
     'releases' => [
         [
+            'version' => 'v1.0.3',
+            'date' => '2026-11-17',
+            'type' => 'Fixed',
+            'summary' => 'Fixes the app not opening on startup.',
+            'highlights' => [
+                'Fixed an issue where the app did not open on startup',
+            ],
+        ],
+        [
             'version' => 'v1.0.2',
             'date' => '2026-11-16',
             'type' => 'Improved',

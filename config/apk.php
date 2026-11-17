@@ -28,15 +28,15 @@
 return [
 
     // File name inside storage/app/public/releases/.
-    'file' => env('APK_FILE', 'gamefowl-v1.0.2.apk'),
+    'file' => env('APK_FILE', 'gamefowl-v1.0.3.apk'),
 
     // Shown to users, 'v' prefixed — keep in step with config/changelog.php.
-    'version' => env('APK_VERSION', 'v1.0.2'),
+    'version' => env('APK_VERSION', 'v1.0.3'),
 
     // ISO-8601 (Y-m-d); formatted by the views.
-    'released_at' => env('APK_RELEASED_AT', '2026-11-16'),
+    'released_at' => env('APK_RELEASED_AT', '2026-11-17'),
 
     // Lowercase hex SHA-256 of the file, so users can verify the download.
-    'sha256' => env('APK_SHA256', 'ae89a2a0edfc741cacc7b2f57a23b19ea132994926768fb15c6366d622ff22ba'),
+    'sha256' => env('APK_SHA256', 'aa6c8cffce9653c43ec0cb2862e8956255cceecff7ff9c9079d78a5cba94fdd0'),
 
 ];
